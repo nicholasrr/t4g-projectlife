@@ -29,14 +29,29 @@ class _HomeScreenState extends State<HomeScreen> {
     // Try to get the last selected period from settings
     final savedPeriod = _settings.getSelectedTimePeriodId();
     if (savedPeriod != null) {
+      // Skip backfill on initial load
       _selectedPeriodId = savedPeriod;
     } else {
-      // Default to current day if no saved period
+      // Treat as a "change"
       final now = DateTime.now();
-      _selectedPeriodId =
+      final newPeriodId =
           'D#${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      _settings.setSelectedTimePeriodId(_selectedPeriodId);
+      _handlePeriodChange(newPeriodId);
     }
+  }
+
+  void _handlePeriodChange(String newPeriodId) {
+    // Backfill when selecting a new period type; if user
+    // is just moving in time within the same type, backfill
+    // will happen for the first time they select the type
+    if (!canComparePeriods(_selectedPeriodId, newPeriodId)) {
+      _backfillPeriod(newPeriodId);
+    }
+
+    setState(() {
+      _selectedPeriodId = newPeriodId;
+    });
+    _settings.setSelectedTimePeriodId(newPeriodId);
   }
 
   Future<void> _backfillPeriod(String periodId) async {
@@ -78,16 +93,9 @@ class _HomeScreenState extends State<HomeScreen> {
     await periods.markAsBackfilled(periodId);
   }
 
-  void _handlePeriodChange(String newPeriodId) {
-    // Only backfill when moving forward in time
-    if (_comparePeriods(_selectedPeriodId, newPeriodId) < 0) {
-      _backfillPeriod(newPeriodId);
-    }
-
-    setState(() {
-      _selectedPeriodId = newPeriodId;
-    });
-    _settings.setSelectedTimePeriodId(newPeriodId);
+  bool canComparePeriods(String a, String b) {
+    if (a.isEmpty || b.isEmpty) return false;
+    return a[0] == b[0];
   }
 
   int _comparePeriods(String a, String b) {

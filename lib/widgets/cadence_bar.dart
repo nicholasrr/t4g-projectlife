@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import '../global/global_data.dart';
 import '../theme.dart';
 
 /// The bottom bar for selecting task cadence (D/W/M/Q/Y)
-class CadenceBar extends StatelessWidget {
+class CadenceBar extends StatefulWidget {
   final String selectedPeriodId;
   final void Function(String) onPeriodChanged;
 
@@ -11,6 +12,14 @@ class CadenceBar extends StatelessWidget {
     required this.selectedPeriodId,
     required this.onPeriodChanged,
   });
+
+  @override
+  State<CadenceBar> createState() => _CadenceBarState();
+}
+
+class _CadenceBarState extends State<CadenceBar> {
+  String get selectedPeriodId => widget.selectedPeriodId;
+  void Function(String) get onPeriodChanged => widget.onPeriodChanged;
 
   void _onCadenceSelected(String cadence) {
     // Keep the day part of the period if possible, otherwise use current date
@@ -82,7 +91,7 @@ class CadenceBar extends StatelessWidget {
 }
 
 /// Individual cadence button with expand-on-tap label
-class _CadenceButton extends StatefulWidget {
+class _CadenceButton extends StatelessWidget {
   final String label;
   final String fullLabel;
   final bool isSelected;
@@ -95,49 +104,37 @@ class _CadenceButton extends StatefulWidget {
     required this.onTap,
   });
 
-  @override
-  State<_CadenceButton> createState() => _CadenceButtonState();
-}
-
-class _CadenceButtonState extends State<_CadenceButton> {
-  bool _isExpanded = false;
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final textStyle = theme.textTheme.titleMedium!;
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _isExpanded = true),
-      onTapUp: (_) {
-        setState(() => _isExpanded = false);
-        widget.onTap();
-      },
-      onTapCancel: () => setState(() => _isExpanded = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spacing,
-          vertical: AppTheme.spacing / 2,
-        ),
-        decoration: BoxDecoration(
-          color:
-              widget.isSelected
-                  ? theme.colorScheme.primary
-                  : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppTheme.radius),
-        ),
-        child: Text(
-          _isExpanded ? widget.fullLabel : widget.label,
-          style: textStyle.copyWith(
-            color:
-                widget.isSelected
-                    ? theme.colorScheme.onPrimary
-                    : theme.colorScheme.onSurface,
-            fontWeight: widget.isSelected ? FontWeight.bold : null,
+    return ValueListenableBuilder(
+      valueListenable: Globals.isHowTo,
+      builder:
+          (_, isHowTo, _) => InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(AppTheme.radius),
+            child: Container(
+              padding: const EdgeInsets.all(AppTheme.spacing),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? AppTheme.light.primaryColor
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppTheme.radius),
+              ),
+              child: Text(
+                isHowTo ? fullLabel : label,
+                style: textStyle.copyWith(
+                  color:
+                      isSelected
+                          ? AppTheme.light.secondaryHeaderColor
+                          : AppTheme.light.primaryColor,
+                  fontWeight: isSelected ? FontWeight.bold : null,
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
     );
   }
 }
