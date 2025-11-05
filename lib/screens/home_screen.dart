@@ -6,6 +6,7 @@ import '../widgets/time_period_header.dart';
 import '../widgets/type_selector.dart';
 import '../widgets/top_bar.dart';
 import '../db/repositories.dart';
+import '../utils/utils.dart';
 
 /// The main screen of the app, using a vertical layout for all components.
 class HomeScreen extends StatefulWidget {
@@ -22,139 +23,58 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _initializeSelectedPeriod();
-  }
-
-  void _initializeSelectedPeriod() {
-    // Try to get the last selected period from settings
-    final savedPeriod = _settings.getSelectedTimePeriodId();
-    if (savedPeriod != null) {
-      // Skip backfill on initial load
-      _selectedPeriodId = savedPeriod;
-    } else {
-      // Treat as a "change"
-      final now = DateTime.now();
-      final newPeriodId =
-          'D#${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-      _handlePeriodChange(newPeriodId);
-    }
+    // Try to get the last selected cadence from settings, use 'D'ay if none
+    var cadence = _settings.getSelectedTimeCadence() ?? 'D';
+    _selectedPeriodId = getCurrentTimePeriodId(cadence);
+    _handlePeriodChange(getCurrentTimePeriodId(cadence));
   }
 
   void _handlePeriodChange(String newPeriodId) {
-    // Backfill when selecting a new period type; if user
-    // is just moving in time within the same type, backfill
-    // will happen for the first time they select the type
-    if (!canComparePeriods(_selectedPeriodId, newPeriodId)) {
-      _backfillPeriod(newPeriodId);
+    if (!isBComparableAndGreaterThanA(_selectedPeriodId, newPeriodId)) {
+      // Do not backfill if moving to the future, it will happen naturally ;)
+      _backfillPeriod(newPeriodId, false);
     }
 
     setState(() {
       _selectedPeriodId = newPeriodId;
     });
-    _settings.setSelectedTimePeriodId(newPeriodId);
+    _settings.setSelectedCadence(extractCadence(newPeriodId));
   }
 
-  Future<void> _backfillPeriod(String periodId) async {
+  Future<void> _backfillPeriod(String periodId, bool skipRecurring) async {
     final tasks = TaskRepository();
     final periods = TimePeriodRepository();
 
-    // Skip if already backfilled
-    if (periods.isBackfilled(periodId)) return;
+    if (!shouldBackfillPeriod(periodId) || periods.isBackfilled(periodId)) {
+      return;
+    }
 
-    // Get previous period's tasks
-    final previousPeriodId = switch (periodId[0]) {
-      'D' => _getPreviousDayId(periodId),
-      'W' => _getPreviousWeekId(periodId),
-      'M' => _getPreviousMonthId(periodId),
-      'Q' => _getPreviousQuarterId(periodId),
-      'Y' => _getPreviousYearId(periodId),
-      _ => periodId,
-    };
-
-    // Port over tasks from previous period
-    final previousTasks = tasks.getTasksForPeriod(previousPeriodId);
-    final tasksToPort =
-        previousTasks
-            .where((task) => task.isRecurring || !task.completed)
-            .map(
-              (task) => task.copyWith(
-                id: '${task.id}_${periodId}',
-                timePeriodId: periodId,
-                completed: false,
-              ),
-            )
+    // First we port the recurring tasks, only from the previous period
+    final previousPeriodId = getPreviousTimePeriodId(periodId);
+    final previousRecurringTasks =
+        tasks
+            .getTasksForPeriod(previousPeriodId)
+            .where((task) => task.isRecurring)
+            .map((task) => portTaskToPeriod(task, periodId))
             .toList();
 
-    if (tasksToPort.isNotEmpty) {
-      await tasks.createTasks(tasksToPort);
-    }
+    // Backfill non-recurring tasks from previous periods
+    await _backfillPeriod(previousPeriodId, true);
 
-    // Mark as backfilled
+    // Port over non-recurring incomplete tasks from previous period
+    final previousIncompleteTasks =
+        tasks
+            .getTasksForPeriod(previousPeriodId)
+            .where((task) => !task.isRecurring && !task.completed)
+            .map((task) => portTaskToPeriod(task, periodId))
+            .toList();
+
+    // Complete backfill
+    await tasks.createTasks([
+      ...previousRecurringTasks,
+      ...previousIncompleteTasks,
+    ]);
     await periods.markAsBackfilled(periodId);
-  }
-
-  bool canComparePeriods(String a, String b) {
-    if (a.isEmpty || b.isEmpty) return false;
-    return a[0] == b[0];
-  }
-
-  int _comparePeriods(String a, String b) {
-    final partsA = a.split('#')[1].split('-').map(int.parse).toList();
-    final partsB = b.split('#')[1].split('-').map(int.parse).toList();
-
-    for (var i = 0; i < partsA.length; i++) {
-      if (partsA[i] != partsB[i]) {
-        return partsA[i].compareTo(partsB[i]);
-      }
-    }
-    return 0;
-  }
-
-  String _getPreviousDayId(String periodId) {
-    final parts = periodId.split('#')[1].split('-');
-    final date = DateTime(
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-      int.parse(parts[2]),
-    ).subtract(const Duration(days: 1));
-    return 'D#${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _getPreviousWeekId(String periodId) {
-    final parts = periodId.split('#')[1].split('-');
-    final date = DateTime(
-      int.parse(parts[0]),
-      int.parse(parts[1]),
-      int.parse(parts[2]),
-    ).subtract(const Duration(days: 7));
-    return 'W#${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  String _getPreviousMonthId(String periodId) {
-    final parts = periodId.split('#')[1].split('-');
-    var year = int.parse(parts[0]);
-    var month = int.parse(parts[1]) - 1;
-    if (month < 1) {
-      year--;
-      month = 12;
-    }
-    return 'M#$year-${month.toString().padLeft(2, '0')}';
-  }
-
-  String _getPreviousQuarterId(String periodId) {
-    final parts = periodId.split('#')[1].split('-');
-    var year = int.parse(parts[0]);
-    var quarter = int.parse(parts[1]) - 1;
-    if (quarter < 1) {
-      year--;
-      quarter = 4;
-    }
-    return 'Q#$year-$quarter';
-  }
-
-  String _getPreviousYearId(String periodId) {
-    final parts = periodId.split('#')[1];
-    return 'Y#${int.parse(parts) - 1}';
   }
 
   @override
@@ -165,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final availableHeight = screenHeight - padding.top - padding.bottom;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [

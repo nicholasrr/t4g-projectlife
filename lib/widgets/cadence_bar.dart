@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../global/global_data.dart';
+import '../utils/global_data.dart';
+import '../utils/utils.dart';
 import '../theme.dart';
 
 /// The bottom bar for selecting task cadence (D/W/M/Q/Y)
@@ -22,18 +23,7 @@ class _CadenceBarState extends State<CadenceBar> {
   void Function(String) get onPeriodChanged => widget.onPeriodChanged;
 
   void _onCadenceSelected(String cadence) {
-    // Keep the day part of the period if possible, otherwise use current date
-    final now = DateTime.now();
-    final newPeriodId = switch (cadence) {
-      'D' =>
-        'D#${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}',
-      'W' =>
-        'W#${now.year}-${now.month.toString().padLeft(2, '0')}-${(now.day - now.weekday).toString().padLeft(2, '0')}',
-      'M' => 'M#${now.year}-${now.month.toString().padLeft(2, '0')}',
-      'Q' => 'Q#${now.year}-${((now.month - 1) ~/ 3) + 1}',
-      'Y' => 'Y#${now.year}',
-      _ => selectedPeriodId,
-    };
+    final newPeriodId = getCurrentTimePeriodId(cadence);
     onPeriodChanged(newPeriodId);
   }
 

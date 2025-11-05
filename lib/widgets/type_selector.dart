@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../global/global_data.dart';
+import '../utils/global_data.dart';
 import '../theme.dart';
 
 /// The type selector bar showing Recurring/Ad-hoc/How-to buttons

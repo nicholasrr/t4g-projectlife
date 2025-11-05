@@ -30,13 +30,13 @@ class SettingsRepository {
 
   /// Gets the last selected time period ID.
   /// Returns null if no period has been selected yet.
-  String? getSelectedTimePeriodId() {
-    return _settingsBox.get(selectedTimePeriodIdKey);
+  String? getSelectedTimeCadence() {
+    return _settingsBox.get(selectedTimeCadence);
   }
 
   /// Sets the currently selected time period ID.
-  Future<void> setSelectedTimePeriodId(String id) async {
-    await _settingsBox.put(selectedTimePeriodIdKey, id);
+  Future<void> setSelectedCadence(String cadence) async {
+    await _settingsBox.put(selectedTimeCadence, cadence);
   }
 
   /// Clears all settings and resets to defaults.
@@ -44,7 +44,7 @@ class SettingsRepository {
     await Future.wait([
       _settingsBox.delete(dragFlipKey),
       _settingsBox.delete(sortModeKey),
-      _settingsBox.delete(selectedTimePeriodIdKey),
+      _settingsBox.delete(selectedTimeCadence),
     ]);
   }
 
@@ -64,7 +64,7 @@ class SettingsRepository {
     return {
       dragFlipKey: getDragFlip(),
       sortModeKey: getSortMode(),
-      selectedTimePeriodIdKey: getSelectedTimePeriodId(),
+      selectedTimeCadence: getSelectedTimeCadence(),
       themeModeKey: getThemeMode(),
     };
   }

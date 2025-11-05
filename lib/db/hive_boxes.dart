@@ -15,7 +15,7 @@ const settingsBoxName = 'settings';
 // Settings keys
 const dragFlipKey = 'dragFlip';
 const sortModeKey = 'sortMode';
-const selectedTimePeriodIdKey = 'selectedTimePeriodId';
+const selectedTimeCadence = 'selectedTimeCadence';
 const themeModeKey = 'themeMode';
 
 /// Opens all Hive boxes needed by the app.
