@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/task.dart';
 import '../db/repositories.dart';
+import '../db/category_repository.dart';
+import '../models/category.dart';
 import '../theme.dart';
 import '../utils/utils.dart';
 import '../utils/global_data.dart';
@@ -26,21 +28,113 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final _descriptionController = TextEditingController();
   bool _isRecurring = false;
   bool _saving = false;
+  List<Category> _categories = [];
+  String? _selectedCategoryId;
 
   @override
   void initState() {
     super.initState();
-    // If editing an existing task, prefill fields from it; otherwise use
-    // the selected type to determine the default recurring state.
     final existing = widget.existingTask;
     if (existing != null) {
       _titleController.text = existing.title;
       _descriptionController.text = existing.description ?? '';
       _isRecurring = existing.isRecurring;
+      _selectedCategoryId = existing.categoryId;
     } else {
       _isRecurring =
           Globals.selectedTypeNotifier.value == SelectedType.recurring;
     }
+    _loadCategories();
+  }
+
+  void _loadCategories() {
+    final cats = CategoryRepository().getAllCategories();
+    setState(() => _categories = cats);
+  }
+
+  Future<void> _showCreateCategoryDialog() async {
+    final titleController = TextEditingController();
+    String selectedColor = '0xFF90CAF9';
+
+    await showDialog<void>(
+      context: context,
+      builder:
+          (context) => StatefulBuilder(
+            builder:
+                (context, setState) => AlertDialog(
+                  title: const Text('New category'),
+                  content: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: titleController,
+                        decoration: const InputDecoration(labelText: 'Title'),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final hex in [
+                            '0xFFEF9A9A',
+                            '0xFFF48FB1',
+                            '0xFFCE93D8',
+                            '0xFF9FA8DA',
+                            '0xFF90CAF9',
+                            '0xFF80DEEA',
+                            '0xFFA5D6A7',
+                            '0xFFFFF59D',
+                            '0xFFFFE082',
+                          ])
+                            GestureDetector(
+                              onTap: () => setState(() => selectedColor = hex),
+                              child: Container(
+                                width: 36,
+                                height: 36,
+                                margin: const EdgeInsets.symmetric(vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Color(int.parse(hex)),
+                                  borderRadius: BorderRadius.circular(3),
+                                  border: Border.all(
+                                    color:
+                                        selectedColor == hex
+                                            ? Colors.black
+                                            : Colors.transparent,
+                                    width: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        final title = titleController.text.trim();
+                        if (title.isEmpty) return;
+                        final id =
+                            DateTime.now().microsecondsSinceEpoch.toString();
+                        final cat = Category(
+                          id: id,
+                          title: title,
+                          colorHex: selectedColor,
+                        );
+                        await CategoryRepository().createCategory(cat);
+                        _loadCategories();
+                        setState(() => _selectedCategoryId = id);
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Create'),
+                    ),
+                  ],
+                ),
+          ),
+    );
   }
 
   @override
@@ -69,6 +163,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 ? null
                 : _descriptionController.text.trim(),
         isRecurring: _isRecurring,
+        categoryId: _selectedCategoryId,
       );
       await TaskRepository().editTask(updated);
     } else {
@@ -83,7 +178,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             _descriptionController.text.trim().isEmpty
                 ? null
                 : _descriptionController.text.trim(),
-        categoryId: null,
+        categoryId: _selectedCategoryId,
         completed: false,
         cadence: cadence,
         timePeriodId: widget.initialTimePeriodId,
@@ -136,6 +231,47 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               value: _isRecurring,
               title: const Text('Recurring'),
               onChanged: (v) => setState(() => _isRecurring = v ?? false),
+            ),
+            const SizedBox(height: AppTheme.spacing),
+            // Category selector + create new
+            Row(
+              children: [
+                Expanded(
+                  child: DropdownButtonFormField<String>(
+                    value: _selectedCategoryId,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    items:
+                        _categories
+                            .map(
+                              (c) => DropdownMenuItem(
+                                value: c.id,
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      margin: const EdgeInsets.only(right: 8),
+                                      decoration: BoxDecoration(
+                                        color: Color(int.parse(c.colorHex)),
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                    Text(c.title),
+                                  ],
+                                ),
+                              ),
+                            )
+                            .toList(),
+                    onChanged: (v) => setState(() => _selectedCategoryId = v),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                TextButton.icon(
+                  onPressed: _showCreateCategoryDialog,
+                  icon: const Icon(Icons.add_box_outlined),
+                  label: const Text('New'),
+                ),
+              ],
             ),
             const Spacer(),
             SizedBox(

@@ -259,7 +259,7 @@ class _TaskItemState extends State<_TaskItem> {
           ),
           decoration: BoxDecoration(
             color:
-                categoryColor?.withOpacity(widget.task.completed ? 0.3 : 1) ??
+                categoryColor?.withOpacity(widget.task.completed ? 0.3 : 0.5) ??
                 theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppTheme.radius),
             boxShadow: [
@@ -286,6 +286,15 @@ class _TaskItemState extends State<_TaskItem> {
                                   ? TextDecoration.lineThrough
                                   : null,
                         ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
+                      child: Text(
+                        widget.task.categoryId != null
+                            ? "(${CategoryRepository().getCategory(widget.task.categoryId!)!.title})"
+                            : '',
+                        style: theme.textTheme.bodyMedium,
                       ),
                     ),
                     if (widget.task.completed)
