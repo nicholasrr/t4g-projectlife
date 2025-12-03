@@ -26,7 +26,7 @@ class TimePeriodHeader extends StatelessWidget {
         color: theme.colorScheme.surface,
         border: Border(
           bottom: BorderSide(
-            color: theme.colorScheme.onSurface.withOpacity(0.1),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
           ),
         ),
       ),

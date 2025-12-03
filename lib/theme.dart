@@ -4,7 +4,6 @@ class AppTheme {
   static ThemeData get light => ThemeData(
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.deepPurple,
-      background: const Color(0xFFF5F5F5), // off-white
       surface: Colors.white,
       onSurface: Colors.grey[850]!, // dark grey text
       primary: Colors.deepPurple,
@@ -32,8 +31,7 @@ class AppTheme {
     colorScheme: ColorScheme.fromSeed(
       seedColor: Colors.purpleAccent,
       brightness: Brightness.dark,
-      background: const Color(0xFF303030), // dark grey
-      surface: const Color(0xFF424242), // slightly lighter grey
+      surface: const Color(0xFF424242), // lighter grey
       onSurface: Colors.white,
       primary: Colors.purpleAccent,
       secondary: Colors.purpleAccent[200]!,
@@ -58,7 +56,7 @@ class AppTheme {
 
   /// Returns a color with reduced opacity for completed tasks
   static Color withCompletedOpacity(Color color) {
-    return color.withOpacity(0.6);
+    return color.withValues(alpha: 0.6);
   }
 
   /// Returns a smaller elevation for completed tasks

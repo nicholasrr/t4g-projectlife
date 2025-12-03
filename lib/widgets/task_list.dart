@@ -137,7 +137,7 @@ class TaskList extends StatelessWidget {
                             ).textTheme.titleSmall!.copyWith(
                               color: Theme.of(
                                 context,
-                              ).colorScheme.onSurface.withOpacity(0.5),
+                              ).colorScheme.onSurface.withValues(alpha: 0.5),
                             ),
                           ),
                         ),
@@ -284,7 +284,9 @@ class _TaskItemState extends State<_TaskItem> {
           ),
           decoration: BoxDecoration(
             color:
-                categoryColor?.withOpacity(widget.task.completed ? 0.3 : 0.5) ??
+                categoryColor?.withValues(
+                  alpha: widget.task.completed ? 0.3 : 0.5,
+                ) ??
                 theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppTheme.radius),
             border: Border.all(
