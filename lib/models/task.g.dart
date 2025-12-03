@@ -24,13 +24,14 @@ class TaskAdapter extends TypeAdapter<Task> {
       completed: fields[4] as bool,
       cadence: fields[5] as String,
       timePeriodId: fields[6] as String,
+      isRecurring: fields[7] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, Task obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -44,7 +45,9 @@ class TaskAdapter extends TypeAdapter<Task> {
       ..writeByte(5)
       ..write(obj.cadence)
       ..writeByte(6)
-      ..write(obj.timePeriodId);
+      ..write(obj.timePeriodId)
+      ..writeByte(7)
+      ..write(obj.isRecurring);
   }
 
   @override

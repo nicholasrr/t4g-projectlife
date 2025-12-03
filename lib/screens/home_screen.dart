@@ -7,6 +7,7 @@ import '../widgets/type_selector.dart';
 import '../widgets/top_bar.dart';
 import '../db/repositories.dart';
 import '../utils/utils.dart';
+import 'task_detail_screen.dart';
 
 /// The main screen of the app, using a vertical layout for all components.
 class HomeScreen extends StatefulWidget {
@@ -116,8 +117,20 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: FloatingActionButton(
-                  onPressed: () {
-                    // TODO: Navigate to task detail screen
+                  onPressed: () async {
+                    // Navigate to the task detail screen to create a new task.
+                    // Pass the currently selected period so the new task is created
+                    // in the correct time period.
+                    await Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder:
+                            (_) => TaskDetailScreen(
+                              initialTimePeriodId: _selectedPeriodId,
+                            ),
+                      ),
+                    );
+                    // After returning, rebuild to pick up newly created tasks.
+                    setState(() {});
                   },
                   child: const Icon(AppTheme.addIcon),
                 ),

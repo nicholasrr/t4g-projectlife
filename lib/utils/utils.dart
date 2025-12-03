@@ -290,13 +290,16 @@ bool isBComparableAndGreaterThanA(String a, String b) {
   return dateB.isAfter(dateA);
 }
 
-Task portTaskToPeriod(Task task, String newPeriodId) {
+String generateTaskId(String timePeriodId) {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   final rand = DateTime.now().millisecondsSinceEpoch;
   final randomString =
       List.generate(8, (index) => chars[(rand + index) % chars.length]).join();
-  final newTaskId = '${randomString}_$newPeriodId';
+  return '${randomString}_$timePeriodId';
+}
 
+Task portTaskToPeriod(Task task, String newPeriodId) {
+  final newTaskId = generateTaskId(newPeriodId);
   return task.copyWith(
     id: newTaskId,
     timePeriodId: newPeriodId,

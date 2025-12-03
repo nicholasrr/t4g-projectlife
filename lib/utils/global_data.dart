@@ -5,21 +5,20 @@ enum SelectedType { recurring, adhoc, howto }
 class Globals {
   bool isDarkMode = false;
   String language = 'en';
-  static SelectedType selectedType = SelectedType.recurring;
-  static final ValueNotifier<bool> isHowTo = ValueNotifier<bool>(false);
+  static final ValueNotifier<SelectedType> selectedTypeNotifier =
+      ValueNotifier<SelectedType>(SelectedType.recurring);
+  // Simple version counter to notify that tasks changed (create/edit/delete)
+  static final ValueNotifier<int> tasksVersion = ValueNotifier<int>(0);
 
   static setRecurring() {
-    selectedType = SelectedType.recurring;
-    isHowTo.value = false;
+    selectedTypeNotifier.value = SelectedType.recurring;
   }
 
   static setAdHoc() {
-    selectedType = SelectedType.adhoc;
-    isHowTo.value = false;
+    selectedTypeNotifier.value = SelectedType.adhoc;
   }
 
   static setHowTo() {
-    selectedType = SelectedType.howto;
-    isHowTo.value = true;
+    selectedTypeNotifier.value = SelectedType.howto;
   }
 }

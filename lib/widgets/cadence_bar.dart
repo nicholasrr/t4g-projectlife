@@ -99,9 +99,9 @@ class _CadenceButton extends StatelessWidget {
     final textStyle = theme.textTheme.titleMedium!;
 
     return ValueListenableBuilder(
-      valueListenable: Globals.isHowTo,
+      valueListenable: Globals.selectedTypeNotifier,
       builder:
-          (_, isHowTo, _) => InkWell(
+          (_, selectedType, _) => InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppTheme.radius),
             child: Container(
@@ -114,7 +114,7 @@ class _CadenceButton extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppTheme.radius),
               ),
               child: Text(
-                isHowTo ? fullLabel : label,
+                selectedType == SelectedType.howto ? fullLabel : label,
                 style: textStyle.copyWith(
                   color:
                       isSelected

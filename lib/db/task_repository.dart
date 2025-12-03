@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import '../models/task.dart';
 import 'hive_boxes.dart';
+import '../utils/global_data.dart';
 
 /// Repository for managing tasks in Hive storage.
 /// Uses a hybrid approach with a main task box and an index box for efficient time period lookups.
@@ -16,6 +17,8 @@ class TaskRepository {
   Future<void> createTask(Task task) async {
     await _tasksBox.put(task.id, task);
     await _addToIndex(task.timePeriodId, task.id);
+    // Notify listeners that tasks changed
+    Globals.tasksVersion.value++;
   }
 
   /// Retrieves a task by its ID.
@@ -49,6 +52,8 @@ class TaskRepository {
     }
 
     await _tasksBox.put(task.id, task);
+    // Notify listeners that tasks changed
+    Globals.tasksVersion.value++;
   }
 
   /// Deletes a task and removes it from indexes.
@@ -57,6 +62,8 @@ class TaskRepository {
     if (task != null) {
       await _removeFromIndex(task.timePeriodId, id);
       await _tasksBox.delete(id);
+      // Notify listeners that tasks changed
+      Globals.tasksVersion.value++;
     }
   }
 
@@ -70,6 +77,8 @@ class TaskRepository {
 
     task.timePeriodId = newTimePeriodId;
     await _tasksBox.put(taskId, task);
+    // Notify listeners that tasks changed
+    Globals.tasksVersion.value++;
   }
 
   /// Gets all tasks for a specific time period.
@@ -123,6 +132,8 @@ class TaskRepository {
     for (final entry in tasksByPeriod.entries) {
       await _addManyToIndex(entry.key, entry.value);
     }
+    // Notify listeners that tasks changed (bulk)
+    Globals.tasksVersion.value++;
   }
 
   /// Helper to add a task ID to a time period's index.

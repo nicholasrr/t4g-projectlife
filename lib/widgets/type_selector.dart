@@ -24,19 +24,22 @@ class _TypeSelectorState extends State<TypeSelector> {
           _TypeButton(
             icon: Icons.sync,
             label: 'Recurring',
-            isSelected: Globals.selectedType == SelectedType.recurring,
+            isSelected:
+                Globals.selectedTypeNotifier.value == SelectedType.recurring,
             onTap: () => setState(() => Globals.setRecurring()),
           ),
           _TypeButton(
             icon: Icons.check_box,
             label: 'Ad-hoc',
-            isSelected: Globals.selectedType == SelectedType.adhoc,
+            isSelected:
+                Globals.selectedTypeNotifier.value == SelectedType.adhoc,
             onTap: () => setState(() => Globals.setAdHoc()),
           ),
           _TypeButton(
             icon: Icons.help,
             label: 'How-to',
-            isSelected: Globals.selectedType == SelectedType.howto,
+            isSelected:
+                Globals.selectedTypeNotifier.value == SelectedType.howto,
             onTap: () => setState(() => Globals.setHowTo()),
           ),
         ],
@@ -64,9 +67,9 @@ class _TypeButton extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ValueListenableBuilder(
-      valueListenable: Globals.isHowTo,
+      valueListenable: Globals.selectedTypeNotifier,
       builder:
-          (_, isHowTo, _) => InkWell(
+          (_, selectedType, _) => InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppTheme.radius),
             child: Container(
@@ -88,7 +91,7 @@ class _TypeButton extends StatelessWidget {
                             ? AppTheme.light.secondaryHeaderColor
                             : AppTheme.light.primaryColor,
                   ),
-                  if (isHowTo) ...[
+                  if (selectedType == SelectedType.howto) ...[
                     const SizedBox(height: AppTheme.spacing / 2),
                     Text(
                       label,
