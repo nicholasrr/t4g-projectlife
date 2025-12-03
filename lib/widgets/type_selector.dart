@@ -24,16 +24,19 @@ class _TypeSelectorState extends State<TypeSelector> {
           _TypeButton(
             icon: Icons.sync,
             label: 'Recurring',
+            isSelected: Globals.selectedType == SelectedType.recurring,
             onTap: () => setState(() => Globals.setRecurring()),
           ),
           _TypeButton(
             icon: Icons.check_box,
             label: 'Ad-hoc',
+            isSelected: Globals.selectedType == SelectedType.adhoc,
             onTap: () => setState(() => Globals.setAdHoc()),
           ),
           _TypeButton(
             icon: Icons.help,
             label: 'How-to',
+            isSelected: Globals.selectedType == SelectedType.howto,
             onTap: () => setState(() => Globals.setHowTo()),
           ),
         ],
@@ -46,9 +49,15 @@ class _TypeSelectorState extends State<TypeSelector> {
 class _TypeButton extends StatelessWidget {
   final IconData icon;
   final String label;
+  final bool isSelected;
   final VoidCallback? onTap;
 
-  const _TypeButton({required this.icon, required this.label, this.onTap});
+  const _TypeButton({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -60,18 +69,34 @@ class _TypeButton extends StatelessWidget {
           (_, isHowTo, _) => InkWell(
             onTap: onTap,
             borderRadius: BorderRadius.circular(AppTheme.radius),
-            child: Padding(
+            child: Container(
               padding: const EdgeInsets.all(AppTheme.spacing),
+              decoration: BoxDecoration(
+                color:
+                    isSelected
+                        ? AppTheme.light.primaryColor
+                        : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppTheme.radius),
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: theme.colorScheme.primary),
+                  Icon(
+                    icon,
+                    color:
+                        isSelected
+                            ? AppTheme.light.secondaryHeaderColor
+                            : AppTheme.light.primaryColor,
+                  ),
                   if (isHowTo) ...[
                     const SizedBox(height: AppTheme.spacing / 2),
                     Text(
                       label,
                       style: theme.textTheme.labelSmall!.copyWith(
-                        color: theme.colorScheme.primary,
+                        color:
+                            isSelected
+                                ? AppTheme.light.secondaryHeaderColor
+                                : AppTheme.light.primaryColor,
                       ),
                     ),
                   ],
