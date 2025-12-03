@@ -108,9 +108,7 @@ class _CadenceButton extends StatelessWidget {
               padding: const EdgeInsets.all(AppTheme.spacing),
               decoration: BoxDecoration(
                 color:
-                    isSelected
-                        ? AppTheme.light.primaryColor
-                        : Colors.transparent,
+                    isSelected ? theme.colorScheme.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppTheme.radius),
               ),
               child: Text(
@@ -118,8 +116,8 @@ class _CadenceButton extends StatelessWidget {
                 style: textStyle.copyWith(
                   color:
                       isSelected
-                          ? AppTheme.light.secondaryHeaderColor
-                          : AppTheme.light.primaryColor,
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.primary,
                   fontWeight: isSelected ? FontWeight.bold : null,
                 ),
               ),

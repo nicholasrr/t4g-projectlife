@@ -73,13 +73,18 @@ class TaskList extends StatelessWidget {
 
                 final filtered =
                     selectedCategories.isNotEmpty
-                        ? baseFiltered
-                            .where(
-                              (t) =>
-                                  t.categoryId != null &&
-                                  selectedCategories.contains(t.categoryId),
-                            )
-                            .toList()
+                        ? baseFiltered.where((t) {
+                          final hasCategory = t.categoryId != null;
+                          final matchesCategory =
+                              hasCategory &&
+                              selectedCategories.contains(t.categoryId);
+                          final matchesUncategorized =
+                              !hasCategory &&
+                              selectedCategories.contains(
+                                Globals.uncategorizedKey,
+                              );
+                          return matchesCategory || matchesUncategorized;
+                        }).toList()
                         : baseFiltered;
 
                 final completedTasks =
@@ -282,9 +287,12 @@ class _TaskItemState extends State<_TaskItem> {
                 categoryColor?.withOpacity(widget.task.completed ? 0.3 : 0.5) ??
                 theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppTheme.radius),
+            border: Border.all(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
+            ),
             boxShadow: [
               BoxShadow(
-                color: theme.shadowColor.withOpacity(0.1),
+                color: theme.shadowColor.withValues(alpha: 0.1),
                 blurRadius: AppTheme.radius,
                 offset: const Offset(0, 2),
               ),

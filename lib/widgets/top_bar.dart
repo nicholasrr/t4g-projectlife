@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme.dart';
 import '../db/category_repository.dart';
+import '../db/settings_repository.dart';
 // category model used via repository; no direct references needed here
 import '../utils/global_data.dart';
 
@@ -25,8 +26,65 @@ class TopBar extends StatelessWidget {
           // Engine/Settings button
           IconButton(
             icon: const Icon(AppTheme.engineIcon),
-            onPressed: () {
-              // TODO: Show settings
+            onPressed: () async {
+              // Show a small settings dialog that allows theme switching
+              final settings = SettingsRepository();
+              final current = settings.getThemeMode();
+
+              final result = await showDialog<String>(
+                context: context,
+                builder: (context) {
+                  String selected = current;
+                  return StatefulBuilder(
+                    builder: (context, setState) {
+                      return AlertDialog(
+                        title: const Text('Settings'),
+                        content: SizedBox(
+                          width: 280,
+                          child: DropdownButtonFormField<String>(
+                            value: selected,
+                            decoration: const InputDecoration(
+                              labelText: 'Theme',
+                              isDense: true,
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'system',
+                                child: Text('System'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'light',
+                                child: Text('Light'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'dark',
+                                child: Text('Dark'),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              if (v != null) setState(() => selected = v);
+                            },
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, null),
+                            child: const Text('Cancel'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => Navigator.pop(context, selected),
+                            child: const Text('Apply'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+              );
+
+              if (result != null) {
+                await settings.setThemeMode(result);
+              }
             },
           ),
 
@@ -53,54 +111,98 @@ class TopBar extends StatelessWidget {
                             title: const Text('Filter by category'),
                             content: SizedBox(
                               width: 320,
-                              child:
-                                  cats.isEmpty
-                                      ? const Text('No categories defined')
-                                      : SingleChildScrollView(
-                                        child: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children:
-                                              cats.map((c) {
-                                                final isSelected = current
-                                                    .contains(c.id);
-                                                return CheckboxListTile(
-                                                  value: isSelected,
-                                                  onChanged:
-                                                      (v) => setState(() {
-                                                        if (v == true) {
-                                                          current.add(c.id);
-                                                        } else {
-                                                          current.remove(c.id);
-                                                        }
-                                                      }),
-                                                  title: Row(
-                                                    children: [
-                                                      Container(
-                                                        width: 12,
-                                                        height: 12,
-                                                        margin:
-                                                            const EdgeInsets.only(
-                                                              right: 8,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: Color(
-                                                            int.parse(
-                                                              c.colorHex,
-                                                            ),
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                3,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                      Text(c.title),
-                                                    ],
-                                                  ),
-                                                );
-                                              }).toList(),
-                                        ),
+                              child: SingleChildScrollView(
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Uncategorized checkbox at the top
+                                    CheckboxListTile(
+                                      value: current.contains(
+                                        Globals.uncategorizedKey,
                                       ),
+                                      onChanged:
+                                          (v) => setState(() {
+                                            if (v == true) {
+                                              current.add(
+                                                Globals.uncategorizedKey,
+                                              );
+                                            } else {
+                                              current.remove(
+                                                Globals.uncategorizedKey,
+                                              );
+                                            }
+                                          }),
+                                      title: Row(
+                                        children: [
+                                          Container(
+                                            width: 12,
+                                            height: 12,
+                                            margin: const EdgeInsets.only(
+                                              right: 8,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.surface,
+                                              borderRadius:
+                                                  BorderRadius.circular(3),
+                                              border: Border.all(
+                                                color:
+                                                    Theme.of(
+                                                      context,
+                                                    ).dividerColor,
+                                              ),
+                                            ),
+                                          ),
+                                          const Text('Uncategorized'),
+                                        ],
+                                      ),
+                                    ),
+                                    if (cats.isEmpty)
+                                      const Padding(
+                                        padding: EdgeInsets.only(top: 8.0),
+                                        child: Text('No categories defined'),
+                                      )
+                                    else
+                                      ...cats.map((c) {
+                                        final isSelected = current.contains(
+                                          c.id,
+                                        );
+                                        return CheckboxListTile(
+                                          value: isSelected,
+                                          onChanged:
+                                              (v) => setState(() {
+                                                if (v == true) {
+                                                  current.add(c.id);
+                                                } else {
+                                                  current.remove(c.id);
+                                                }
+                                              }),
+                                          title: Row(
+                                            children: [
+                                              Container(
+                                                width: 12,
+                                                height: 12,
+                                                margin: const EdgeInsets.only(
+                                                  right: 8,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: Color(
+                                                    int.parse(c.colorHex),
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(3),
+                                                ),
+                                              ),
+                                              Text(c.title),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                  ],
+                                ),
+                              ),
                             ),
                             actions: [
                               TextButton(

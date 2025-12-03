@@ -76,9 +76,7 @@ class _TypeButton extends StatelessWidget {
               padding: const EdgeInsets.all(AppTheme.spacing),
               decoration: BoxDecoration(
                 color:
-                    isSelected
-                        ? AppTheme.light.primaryColor
-                        : Colors.transparent,
+                    isSelected ? theme.colorScheme.primary : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppTheme.radius),
               ),
               child: Column(
@@ -88,8 +86,8 @@ class _TypeButton extends StatelessWidget {
                     icon,
                     color:
                         isSelected
-                            ? AppTheme.light.secondaryHeaderColor
-                            : AppTheme.light.primaryColor,
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.primary,
                   ),
                   if (selectedType == SelectedType.howto) ...[
                     const SizedBox(height: AppTheme.spacing / 2),
@@ -98,8 +96,8 @@ class _TypeButton extends StatelessWidget {
                       style: theme.textTheme.labelSmall!.copyWith(
                         color:
                             isSelected
-                                ? AppTheme.light.secondaryHeaderColor
-                                : AppTheme.light.primaryColor,
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.primary,
                       ),
                     ),
                   ],

@@ -30,13 +30,13 @@ class AppTheme {
 
   static ThemeData get dark => ThemeData(
     colorScheme: ColorScheme.fromSeed(
-      seedColor: Colors.deepPurple,
+      seedColor: Colors.purpleAccent,
       brightness: Brightness.dark,
       background: const Color(0xFF303030), // dark grey
       surface: const Color(0xFF424242), // slightly lighter grey
       onSurface: Colors.white,
-      primary: Colors.deepPurple,
-      secondary: Colors.deepPurple[200]!,
+      primary: Colors.purpleAccent,
+      secondary: Colors.purpleAccent[200]!,
     ),
     useMaterial3: true,
     appBarTheme: const AppBarTheme(
@@ -46,7 +46,7 @@ class AppTheme {
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFF303030),
-      selectedItemColor: Colors.deepPurple,
+      selectedItemColor: Colors.purpleAccent,
       unselectedItemColor: Colors.grey,
     ),
     cardTheme: CardTheme(

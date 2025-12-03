@@ -13,6 +13,9 @@ class Globals {
   static final ValueNotifier<Set<String>> selectedCategoryIds =
       ValueNotifier<Set<String>>(<String>{});
 
+  // Special key used to represent the 'Uncategorized' filter
+  static const String uncategorizedKey = '__UNCATEGORIZED__';
+
   static setRecurring() {
     selectedTypeNotifier.value = SelectedType.recurring;
   }
