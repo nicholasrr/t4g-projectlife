@@ -24,114 +24,134 @@ class TaskList extends StatelessWidget {
         return ValueListenableBuilder<int>(
           valueListenable: Globals.tasksVersion,
           builder: (_, __, ___) {
-            // If showing how-to, render explanatory text instead of tasks
-            if (selectedType == SelectedType.howto) {
-              return CustomScrollView(
-                slivers: [
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppTheme.padding),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'How to use Project: Life',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+            // Also listen to selected categories to apply category filters
+            return ValueListenableBuilder<Set<String>>(
+              valueListenable: Globals.selectedCategoryIds,
+              builder: (_, selectedCategories, __) {
+                // If showing how-to, render explanatory text instead of tasks
+                if (selectedType == SelectedType.howto) {
+                  return CustomScrollView(
+                    slivers: [
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppTheme.padding),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'How to use Project: Life',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: AppTheme.spacing),
+                              Text(
+                                'Switch between Recurring and Ad-hoc to view the tasks of each type.\n'
+                                'Tap the + button to quickly add a task to the current time period.\n'
+                                'Use the time period header to navigate between periods.\n'
+                                'Swipe left or right on a task to complete or delete it.',
+                              ),
+                            ],
                           ),
-                          SizedBox(height: AppTheme.spacing),
-                          Text(
-                            'Switch between Recurring and Ad-hoc to view the tasks of each type.\n'
-                            'Tap the + button to quickly add a task to the current time period.\n'
-                            'Use the time period header to navigate between periods.\n'
-                            'Swipe left or right on a task to complete or delete it.',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-
-            // Otherwise filter tasks by type
-            final tasks = TaskRepository().getTasksForPeriod(timePeriodId);
-            final filtered =
-                tasks
-                    .where(
-                      (t) =>
-                          t.isRecurring ==
-                          (selectedType == SelectedType.recurring),
-                    )
-                    .toList();
-
-            final completedTasks = filtered.where((t) => t.completed).toList();
-            final incompleteTasks =
-                filtered.where((t) => !t.completed).toList();
-
-            // If no tasks available, show an empty state message
-            if (filtered.isEmpty) {
-              return CustomScrollView(
-                slivers: [
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        selectedType == SelectedType.recurring
-                            ? 'No recurring tasks for this period.'
-                            : 'No ad-hoc tasks for this period.',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
-
-            return CustomScrollView(
-              slivers: [
-                // Incomplete tasks
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => _TaskItem(
-                      task: incompleteTasks[index],
-                      key: ValueKey(incompleteTasks[index].id),
-                    ),
-                    childCount: incompleteTasks.length,
-                  ),
-                ),
-
-                // Completed tasks (if any)
-                if (completedTasks.isNotEmpty) ...[
-                  // "Completed" header
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppTheme.padding),
-                      child: Text(
-                        'Completed',
-                        style: Theme.of(context).textTheme.titleSmall!.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withOpacity(0.5),
                         ),
                       ),
-                    ),
-                  ),
+                    ],
+                  );
+                }
 
-                  // Completed task items
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => _TaskItem(
-                        task: completedTasks[index],
-                        key: ValueKey(completedTasks[index].id),
+                // Otherwise filter tasks by type, then by selected categories (if any)
+                final tasks = TaskRepository().getTasksForPeriod(timePeriodId);
+                final baseFiltered =
+                    tasks
+                        .where(
+                          (t) =>
+                              t.isRecurring ==
+                              (selectedType == SelectedType.recurring),
+                        )
+                        .toList();
+
+                final filtered =
+                    selectedCategories.isNotEmpty
+                        ? baseFiltered
+                            .where(
+                              (t) =>
+                                  t.categoryId != null &&
+                                  selectedCategories.contains(t.categoryId),
+                            )
+                            .toList()
+                        : baseFiltered;
+
+                final completedTasks =
+                    filtered.where((t) => t.completed).toList();
+                final incompleteTasks =
+                    filtered.where((t) => !t.completed).toList();
+
+                // If no tasks available, show an empty state message
+                if (filtered.isEmpty) {
+                  return CustomScrollView(
+                    slivers: [
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: Center(
+                          child: Text(
+                            selectedType == SelectedType.recurring
+                                ? 'No recurring tasks for this period.'
+                                : 'No ad-hoc tasks for this period.',
+                            style: Theme.of(context).textTheme.bodyLarge,
+                          ),
+                        ),
                       ),
-                      childCount: completedTasks.length,
+                    ],
+                  );
+                }
+
+                return CustomScrollView(
+                  slivers: [
+                    // Incomplete tasks
+                    SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) => _TaskItem(
+                          task: incompleteTasks[index],
+                          key: ValueKey(incompleteTasks[index].id),
+                        ),
+                        childCount: incompleteTasks.length,
+                      ),
                     ),
-                  ),
-                ],
-              ],
+
+                    // Completed tasks (if any)
+                    if (completedTasks.isNotEmpty) ...[
+                      // "Completed" header
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppTheme.padding),
+                          child: Text(
+                            'Completed',
+                            style: Theme.of(
+                              context,
+                            ).textTheme.titleSmall!.copyWith(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withOpacity(0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Completed task items
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) => _TaskItem(
+                            task: completedTasks[index],
+                            key: ValueKey(completedTasks[index].id),
+                          ),
+                          childCount: completedTasks.length,
+                        ),
+                      ),
+                    ],
+                  ],
+                );
+              },
             );
           },
         );
