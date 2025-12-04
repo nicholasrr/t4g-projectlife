@@ -69,19 +69,7 @@ Summary (plain language)
 - The App may link to external websites or services (e.g., documentation, help pages). We are not responsible for the privacy practices of external sites. Check their policies for details.
 
 10. How to contact us or request deletion
-- Contact: privacy@example.com (replace with your actual support email).
+- Contact: st4rl00p@gmail.com
 - Request types we can help with:
   - Delete your data instructions or requests (we will provide steps or a data removal action if you provide relevant device/task identifiers).
   - Questions about this policy.
-
-Important notice about Play/App Signing and keystores
-- Play App Signing: When distributing via Google Play, Play may manage your app signing key; this does not involve transferring user data.
-- Keystore & credentials: Your upload and signing keys are developer-side artifacts; keep them secure. They do not affect user privacy.
-
-If you add cloud sync, analytics, ads, or other features later
-- We’ll update this policy to list any new data collected, the legal bases for processing (where required), and the third parties involved. We’ll also show whether the new behavior requires opt-in, and how to opt out.
-
-Notes & recommended next steps (technical)
-- Add this file to your repo as `docs/privacy_policy.md` and add a short link in `README.md`.
-- In the Play Console, provide a privacy policy URL (if you host it — e.g., GitHub Pages, your website) or paste the text where required.
-- If you plan to add analytics, crash reporting, cloud backups or sign-in, update the policy before release.
