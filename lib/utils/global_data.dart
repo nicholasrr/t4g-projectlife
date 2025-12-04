@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum SelectedType { recurring, adhoc, howto }
+enum SelectedType { all, recurring, adhoc, howto }
 
 class Globals {
   bool isDarkMode = false;
@@ -15,6 +15,10 @@ class Globals {
 
   // Special key used to represent the 'Uncategorized' filter
   static const String uncategorizedKey = '__UNCATEGORIZED__';
+
+  static setAll() {
+    selectedTypeNotifier.value = SelectedType.all;
+  }
 
   static setRecurring() {
     selectedTypeNotifier.value = SelectedType.recurring;

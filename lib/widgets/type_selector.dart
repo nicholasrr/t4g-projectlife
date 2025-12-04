@@ -22,6 +22,12 @@ class _TypeSelectorState extends State<TypeSelector> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _TypeButton(
+            icon: Icons.view_agenda,
+            label: 'All',
+            isSelected: Globals.selectedTypeNotifier.value == SelectedType.all,
+            onTap: () => setState(() => Globals.setAll()),
+          ),
+          _TypeButton(
             icon: Icons.sync,
             label: 'Recurring',
             isSelected:

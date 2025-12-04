@@ -3,6 +3,7 @@ import '../models/task.dart';
 import '../db/repositories.dart';
 import '../theme.dart';
 import '../screens/task_detail_screen.dart';
+import '../screens/manage_categories_screen.dart';
 import '../utils/global_data.dart';
 
 /// The main scrollable list of tasks
@@ -37,7 +38,7 @@ class TaskList extends StatelessWidget {
                           padding: const EdgeInsets.all(AppTheme.padding),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-                            children: const [
+                            children: [
                               Text(
                                 'How to use Project: Life',
                                 style: TextStyle(
@@ -52,6 +53,24 @@ class TaskList extends StatelessWidget {
                                 'Use the time period header to navigate between periods.\n'
                                 'Swipe left or right on a task to complete or delete it.',
                               ),
+                              const SizedBox(height: AppTheme.spacing * 1.5),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) =>
+                                                const ManageCategoriesScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Click here to manage categories',
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -60,16 +79,18 @@ class TaskList extends StatelessWidget {
                   );
                 }
 
-                // Otherwise filter tasks by type, then by selected categories (if any)
+                // Otherwise filter tasks by type (unless 'all' is selected), then by selected categories (if any)
                 final tasks = TaskRepository().getTasksForPeriod(timePeriodId);
                 final baseFiltered =
-                    tasks
-                        .where(
-                          (t) =>
-                              t.isRecurring ==
-                              (selectedType == SelectedType.recurring),
-                        )
-                        .toList();
+                    (selectedType == SelectedType.all)
+                        ? tasks
+                        : tasks
+                            .where(
+                              (t) =>
+                                  t.isRecurring ==
+                                  (selectedType == SelectedType.recurring),
+                            )
+                            .toList();
 
                 final filtered =
                     selectedCategories.isNotEmpty
