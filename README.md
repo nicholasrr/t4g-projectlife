@@ -50,3 +50,97 @@ Now, there are a few nuances of the app:
 5. There will be boxes for each time cadence, one box for categories and another for settings. The box of each time cadence will contain the tasks for each time period.
 
 I think this is a good description of the goals. I know this is a lot, so let's take this little by little. First, please add all of this to the copilot instructions, in details, so that it doesn't get lost.
+
+## Development Commands
+
+### Dependencies
+```powershell
+# Install/update dependencies
+flutter pub get
+
+# Check for outdated packages
+flutter pub outdated
+
+# Upgrade dependencies (respecting constraints)
+flutter pub upgrade
+```
+
+### Code Generation
+```powershell
+# Regenerate Hive models and adapters
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# Watch mode (regenerates automatically on file changes)
+flutter pub run build_runner watch --delete-conflicting-outputs
+```
+
+### Running & Testing
+```powershell
+# List available devices
+flutter devices
+
+# Run in debug mode (default)
+flutter run
+
+# Run on specific device
+flutter run -d <device-id>
+
+# Run tests
+flutter test
+
+# Run with specific Flutter version
+flutter --version
+```
+
+### Building
+```powershell
+# Build APK for debug
+flutter build apk --debug
+
+# Build APK for release
+flutter build apk --release
+
+# Build Android App Bundle (AAB) for Play Store
+flutter build appbundle --release
+
+# Build for other platforms
+flutter build ios --release
+flutter build web --release
+flutter build windows --release
+```
+
+### Formatting & Analysis
+```powershell
+# Format all Dart files
+dart format .
+
+# Run static analysis
+flutter analyze
+
+# Fix common issues automatically
+dart fix --apply
+```
+
+### Clean & Reset
+```powershell
+# Clean build artifacts
+flutter clean
+
+# Clean and reinstall dependencies
+flutter clean; flutter pub get
+```
+
+### Release Workflow
+```powershell
+# 1. Update version in pubspec.yaml
+# 2. Regenerate models if needed
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# 3. Run tests
+flutter test
+
+# 4. Build signed AAB
+flutter build appbundle --release
+
+# Output: build\app\outputs\bundle\release\app-release.aab
+```
