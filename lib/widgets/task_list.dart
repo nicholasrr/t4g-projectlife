@@ -9,8 +9,9 @@ import '../utils/global_data.dart';
 /// The main scrollable list of tasks
 class TaskList extends StatelessWidget {
   final String timePeriodId;
+  final VoidCallback? onresetBackfill;
 
-  const TaskList({super.key, required this.timePeriodId});
+  const TaskList({super.key, required this.timePeriodId, this.onresetBackfill});
 
   @override
   Widget build(BuildContext context) {
@@ -71,6 +72,55 @@ class TaskList extends StatelessWidget {
                                   ),
                                 ),
                               ),
+                              const SizedBox(height: AppTheme.spacing),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  icon: const Icon(Icons.refresh),
+                                  label: const Text(
+                                    'Backfill tasks from previous periods',
+                                  ),
+                                  onPressed:
+                                      onresetBackfill != null
+                                          ? () {
+                                            showDialog<void>(
+                                              context: context,
+                                              builder:
+                                                  (context) => AlertDialog(
+                                                    title: const Text(
+                                                      'Start backfill?',
+                                                    ),
+                                                    content: const Text(
+                                                      'This will port incomplete or recurring tasks from previous periods.',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed:
+                                                            () => Navigator.pop(
+                                                              context,
+                                                            ),
+                                                        child: const Text(
+                                                          'Cancel',
+                                                        ),
+                                                      ),
+                                                      ElevatedButton(
+                                                        onPressed: () {
+                                                          Navigator.pop(
+                                                            context,
+                                                          );
+                                                          onresetBackfill!();
+                                                        },
+                                                        child: const Text(
+                                                          'Reset',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                            );
+                                          }
+                                          : null,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -123,7 +173,9 @@ class TaskList extends StatelessWidget {
                           child: Text(
                             selectedType == SelectedType.recurring
                                 ? 'No recurring tasks for this period.'
-                                : 'No ad-hoc tasks for this period.',
+                                : selectedType == SelectedType.adhoc
+                                ? 'No ad-hoc tasks for this period.'
+                                : 'No tasks for this period.',
                             style: Theme.of(context).textTheme.bodyLarge,
                           ),
                         ),
@@ -268,15 +320,8 @@ class _TaskItemState extends State<_TaskItem> {
         } else {
           // Completion action: toggle completed state but do not dismiss the
           // widget (return false so Dismissible keeps it in the tree).
-          final updatedTask = Task(
-            id: widget.task.id,
-            title: widget.task.title,
-            description: widget.task.description,
-            categoryId: widget.task.categoryId,
+          final updatedTask = widget.task.copyWith(
             completed: !widget.task.completed,
-            timePeriodId: widget.task.timePeriodId,
-            isRecurring: widget.task.isRecurring,
-            cadence: widget.task.timePeriodId[0],
           );
           await _repositories.editTask(updatedTask);
           return false;
@@ -348,6 +393,18 @@ class _TaskItemState extends State<_TaskItem> {
                         style: theme.textTheme.bodyMedium,
                       ),
                     ),
+                    // Show count display if targetCount > 1
+                    if (widget.task.targetCount > 1)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 5),
+                        child: Text(
+                          "${widget.task.currentCount}/${widget.task.targetCount}",
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
                     if (widget.task.completed)
                       Icon(
                         Icons.check_circle,
@@ -361,6 +418,56 @@ class _TaskItemState extends State<_TaskItem> {
                   Text(
                     widget.task.description!,
                     style: theme.textTheme.bodyMedium,
+                  ),
+                ],
+                // Counter buttons if targetCount > 1
+                if (widget.task.targetCount > 1 && !widget.task.completed) ...[
+                  const SizedBox(height: AppTheme.spacing),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        iconSize: 20,
+                        constraints: const BoxConstraints(
+                          minWidth: 36,
+                          minHeight: 36,
+                        ),
+                        padding: EdgeInsets.zero,
+                        onPressed:
+                            widget.task.currentCount > 0
+                                ? () async {
+                                  final updatedTask = widget.task.copyWith(
+                                    currentCount: widget.task.currentCount - 1,
+                                  );
+                                  await _repositories.editTask(updatedTask);
+                                }
+                                : null,
+                      ),
+                      const SizedBox(width: AppTheme.spacing),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        iconSize: 20,
+                        constraints: const BoxConstraints(
+                          minWidth: 36,
+                          minHeight: 36,
+                        ),
+                        padding: EdgeInsets.zero,
+                        onPressed:
+                            widget.task.currentCount < widget.task.targetCount
+                                ? () async {
+                                  final newCount = widget.task.currentCount + 1;
+                                  final isNowComplete =
+                                      newCount >= widget.task.targetCount;
+                                  final updatedTask = widget.task.copyWith(
+                                    currentCount: newCount,
+                                    completed: isNowComplete,
+                                  );
+                                  await _repositories.editTask(updatedTask);
+                                }
+                                : null,
+                      ),
+                    ],
                   ),
                 ],
               ],

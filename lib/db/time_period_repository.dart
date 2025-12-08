@@ -69,4 +69,15 @@ class TimePeriodRepository {
   Future<void> deleteTimePeriod(String id) async {
     await _timePeriodsBox.delete(id);
   }
+
+  /// Resets all time periods' backfill flags to false.
+  /// This will trigger a full backfill on the next app initialization.
+  /// Useful for debugging or manual backfill reset.
+  Future<void> resetAllBackfillFlags() async {
+    final periods = getAllTimePeriods();
+    for (final period in periods) {
+      period.backfilled = false;
+      await _timePeriodsBox.put(period.id, period);
+    }
+  }
 }

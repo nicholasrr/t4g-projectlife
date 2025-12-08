@@ -8,6 +8,7 @@ import '../widgets/top_bar.dart';
 import '../db/repositories.dart';
 import '../utils/utils.dart';
 import 'task_detail_screen.dart';
+import '../models/task.dart';
 
 /// The main screen of the app, using a vertical layout for all components.
 class HomeScreen extends StatefulWidget {
@@ -27,13 +28,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // Try to get the last selected cadence from settings, use 'D'ay if none
     var cadence = _settings.getSelectedTimeCadence() ?? 'D';
     _selectedPeriodId = getCurrentTimePeriodId(cadence);
-    _handlePeriodChange(getCurrentTimePeriodId(cadence));
+    _handlePeriodChange(getCurrentTimePeriodId(cadence), true);
   }
 
-  void _handlePeriodChange(String newPeriodId) {
-    if (!isBComparableAndGreaterThanA(_selectedPeriodId, newPeriodId)) {
-      // Do not backfill if moving to the future, it will happen naturally ;)
-      _backfillPeriod(newPeriodId, false);
+  void _handlePeriodChange(String newPeriodId, bool applyBackfill) {
+    if (applyBackfill) {
+      _backfillPeriod(newPeriodId);
     }
 
     setState(() {
@@ -42,40 +42,85 @@ class _HomeScreenState extends State<HomeScreen> {
     _settings.setSelectedCadence(extractCadence(newPeriodId));
   }
 
-  Future<void> _backfillPeriod(String periodId, bool skipRecurring) async {
-    final tasks = TaskRepository();
-    final periods = TimePeriodRepository();
+  Future<List<Task>> _cleanAndDedupeTasks(List<Task> tasks) async {
+    final taskRepository = TaskRepository();
+    final Map<String, Task> uniqueTasksByRecurrenceId = {};
+    for (final task in tasks) {
+      if (task.recurrenceId == null) {
+        // No recurrence ID - assign a recurrence ID to it now
+        task.recurrenceId = generateId();
+        await taskRepository.editTask(task);
+      }
 
-    if (!shouldBackfillPeriod(periodId) || periods.isBackfilled(periodId)) {
+      if (!uniqueTasksByRecurrenceId.containsKey(task.recurrenceId!)) {
+        uniqueTasksByRecurrenceId[task.recurrenceId!] = task;
+      } else {
+        final currentTask = uniqueTasksByRecurrenceId[task.recurrenceId!]!;
+        if (task.timePeriodId.compareTo(currentTask.timePeriodId) > 0) {
+          // This task is from a later time period - replace
+          uniqueTasksByRecurrenceId[task.recurrenceId!] = task;
+        }
+      }
+    }
+    return uniqueTasksByRecurrenceId.values.toList();
+  }
+
+  Future<void> _backfillPeriod(String periodId) async {
+    final taskRepository = TaskRepository();
+    final periodRepository = TimePeriodRepository();
+
+    if (!shouldBackfillPeriod(periodId) ||
+        periodRepository.isBackfilled(periodId)) {
       return;
     }
 
-    // First we port the recurring tasks, only from the previous period
     final previousPeriodId = getPreviousTimePeriodId(periodId);
+    await _backfillPeriod(previousPeriodId);
+
     final previousRecurringTasks =
-        tasks
+        taskRepository
             .getTasksForPeriod(previousPeriodId)
             .where((task) => task.isRecurring)
-            .map((task) => portTaskToPeriod(task, periodId))
             .toList();
-
-    // Backfill non-recurring tasks from previous periods
-    await _backfillPeriod(previousPeriodId, true);
-
-    // Port over non-recurring incomplete tasks from previous period
     final previousIncompleteTasks =
-        tasks
+        taskRepository
             .getTasksForPeriod(previousPeriodId)
             .where((task) => !task.isRecurring && !task.completed)
+            .toList();
+    final currentPeriodTasks = await _cleanAndDedupeTasks([
+      ...previousRecurringTasks,
+      ...previousIncompleteTasks,
+      ...taskRepository.getTasksForPeriod(periodId),
+    ]);
+    final newTasks =
+        currentPeriodTasks
+            .where((task) => task.timePeriodId != periodId)
             .map((task) => portTaskToPeriod(task, periodId))
             .toList();
 
-    // Complete backfill
-    await tasks.createTasks([
-      ...previousRecurringTasks,
-      ...previousIncompleteTasks,
-    ]);
-    await periods.markAsBackfilled(periodId);
+    await taskRepository.createTasks(newTasks);
+    await periodRepository.markAsBackfilled(periodId);
+  }
+
+  Future<void> _resetBackfill() async {
+    final periodRepository = TimePeriodRepository();
+
+    // Reset all backfill flags
+    await periodRepository.resetAllBackfillFlags();
+
+    // Trigger backfill for current period
+    await _backfillPeriod(_selectedPeriodId);
+
+    // Show feedback to user
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Backfill reset and reapplied'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      setState(() {});
+    }
   }
 
   @override
@@ -101,12 +146,17 @@ class _HomeScreenState extends State<HomeScreen> {
               height: availableHeight * AppTheme.buttonHeightRatio,
               child: TimePeriodHeader(
                 selectedPeriodId: _selectedPeriodId,
-                onPeriodChanged: _handlePeriodChange,
+                onPeriodChanged: (period) => _handlePeriodChange(period, false),
               ),
             ),
 
             // Task list (scrollable)
-            Expanded(child: TaskList(timePeriodId: _selectedPeriodId)),
+            Expanded(
+              child: TaskList(
+                timePeriodId: _selectedPeriodId,
+                onresetBackfill: _resetBackfill,
+              ),
+            ),
 
             // Add task button
             Padding(
@@ -148,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
               height: availableHeight * AppTheme.buttonHeightRatio,
               child: CadenceBar(
                 selectedPeriodId: _selectedPeriodId,
-                onPeriodChanged: _handlePeriodChange,
+                onPeriodChanged: (period) => _handlePeriodChange(period, true),
               ),
             ),
           ],

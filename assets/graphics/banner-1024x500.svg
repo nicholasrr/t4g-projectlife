@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500" role="img" aria-label="Project Life banner - simplified">
+  <defs>
+  <linearGradient id="bg" x1="0%" x2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F7F4FF"/>
+    </linearGradient>
+  <linearGradient id="ringGrad" x1="0%" x2="100%">
+      <stop offset="0%" stop-color="#B04BD6"/>
+      <stop offset="100%" stop-color="#9A2FB2"/>
+    </linearGradient>
+    <filter id="softShadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="10" stdDeviation="18" flood-color="#000" flood-opacity="0.12"/>
+    </filter>
+    <style><![CDATA[
+      .background { fill: url(#bg); }
+      .oval { fill: none; stroke: url(#ringGrad); stroke-width:12; }
+      .emblem-bg { fill: #FFFFFF; }
+      .accent-purple { fill: #A34FC8; }
+      .accent-yellow { fill: #FFC107; }
+  .thumb-shadow { fill: #000000; opacity: 0.06; }
+      .tiny-label { font-family: Inter, Roboto, Arial, sans-serif; font-size:14px; fill:#4B3B5F; opacity:0.9 }
+    ]]></style>
+  </defs>
+
+  <!-- Background -->
+  <rect class="background" x="0" y="0" width="1024" height="500" />
+
+  <!-- Large decorative oval (inspired by launcher) -->
+  <g transform="translate(32,30)">
+    <ellipse class="oval" cx="480" cy="220" rx="456" ry="210" />
+  </g>
+
+  <!-- Emblem (left) - simplified circular mark with stylized thumb -->
+  <g transform="translate(96,80)">
+    <!-- purple outer ring (keep) -->
+    <circle cx="192" cy="170" r="120" fill="none" stroke="#A34FC8" stroke-width="20"/>
+
+    <!-- clock centered inside the emblem -->
+    <g id="clock" transform="translate(192,170)">
+      <circle r="92" fill="#FFFFFF" opacity="0.06" stroke="#EDE6FB" stroke-width="1"/>
+      <!-- ticks -->
+      <g stroke="#9A2FB2" stroke-width="1.5">
+        <line x1="0" y1="-82" x2="0" y2="-70" />
+        <line x1="58" y1="-42" x2="50" y2="-36" />
+        <line x1="82" y1="0" x2="70" y2="0" />
+        <line x1="58" y1="42" x2="50" y2="36" />
+        <line x1="0" y1="82" x2="0" y2="70" />
+        <line x1="-58" y1="42" x2="-50" y2="36" />
+        <line x1="-82" y1="0" x2="-70" y2="0" />
+        <line x1="-58" y1="-42" x2="-50" y2="-36" />
+      </g>
+      <!-- minute hand (long, yellow) -->
+      <line x1="0" y1="0" x2="0" y2="-68" stroke="#FFC107" stroke-width="8" stroke-linecap="round"/>
+      <!-- hour hand (shorter, yellow-dark) -->
+      <line x1="0" y1="0" x2="36" y2="12" stroke="#FFB300" stroke-width="8" stroke-linecap="round"/>
+      <!-- center dot -->
+      <circle r="6" fill="#FFC107" />
+    </g>
+  </g>
+
+  <!-- Clock overlay inside emblem (yellow pointers) -->
+  <!-- clock moved inside emblem group -->
+
+  <!-- Brand text on the right end of the ellipse (two lines) -->
+  <g transform="translate(660,220)">
+    <text font-family="Inter, Roboto, Arial, sans-serif" font-size="44" font-weight="700" fill="#4B3B5F">Project:</text>
+    <text font-family="Inter, Roboto, Arial, sans-serif" font-size="64" font-weight="800" fill="#4B3B5F" y="64">Life</text>
+  </g>
+
+</svg>

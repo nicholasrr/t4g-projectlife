@@ -1,8 +1,11 @@
 import 'dart:developer';
+import 'dart:math' as math;
 
 import 'package:intl/intl.dart';
 
 import '../models/task.dart';
+
+var _random = math.Random(DateTime.now().millisecondsSinceEpoch);
 
 /////////////////////////
 // Time period parsing //
@@ -291,18 +294,28 @@ bool isBComparableAndGreaterThanA(String a, String b) {
 }
 
 String generateTaskId(String timePeriodId) {
+  return '${generateId()}_$timePeriodId';
+}
+
+String generateId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  final rand = DateTime.now().millisecondsSinceEpoch;
-  final randomString =
-      List.generate(8, (index) => chars[(rand + index) % chars.length]).join();
-  return '${randomString}_$timePeriodId';
+  return List.generate(
+    12,
+    (index) => chars[_random.nextInt(chars.length)],
+  ).join();
 }
 
 Task portTaskToPeriod(Task task, String newPeriodId) {
   final newTaskId = generateTaskId(newPeriodId);
+
+  // For recurring tasks, reset currentCount to 0
+  // For ad-hoc tasks, preserve the currentCount
+  final newCurrentCount = task.isRecurring ? 0 : task.currentCount;
+
   return task.copyWith(
     id: newTaskId,
     timePeriodId: newPeriodId,
     completed: false,
+    currentCount: newCurrentCount,
   );
 }

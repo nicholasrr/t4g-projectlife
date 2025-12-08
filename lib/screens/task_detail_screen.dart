@@ -26,6 +26,7 @@ class TaskDetailScreen extends StatefulWidget {
 class _TaskDetailScreenState extends State<TaskDetailScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
+  final _targetCountController = TextEditingController();
   bool _isRecurring = false;
   bool _saving = false;
   List<Category> _categories = [];
@@ -40,9 +41,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       _descriptionController.text = existing.description ?? '';
       _isRecurring = existing.isRecurring;
       _selectedCategoryId = existing.categoryId;
+      _targetCountController.text = existing.targetCount.toString();
     } else {
       _isRecurring =
           Globals.selectedTypeNotifier.value == SelectedType.recurring;
+      _targetCountController.text = '1';
     }
     _loadCategories();
   }
@@ -141,6 +144,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _targetCountController.dispose();
     super.dispose();
   }
 
@@ -150,6 +154,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Please enter a title')));
+      return;
+    }
+
+    final targetCount = int.tryParse(_targetCountController.text) ?? 1;
+    if (targetCount < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Target count must be at least 1')),
+      );
       return;
     }
 
@@ -164,6 +176,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 : _descriptionController.text.trim(),
         isRecurring: _isRecurring,
         categoryId: _selectedCategoryId,
+        targetCount: targetCount,
       );
       await TaskRepository().editTask(updated);
     } else {
@@ -183,6 +196,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         cadence: cadence,
         timePeriodId: widget.initialTimePeriodId,
         isRecurring: _isRecurring,
+        targetCount: targetCount,
+        recurrenceId: generateId(),
       );
 
       await TaskRepository().createTask(task);
@@ -224,6 +239,15 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 hintText: 'Optional details',
               ),
               maxLines: 4,
+            ),
+            const SizedBox(height: AppTheme.spacing),
+            TextField(
+              controller: _targetCountController,
+              decoration: const InputDecoration(
+                labelText: 'Target Count',
+                hintText: 'How many times to complete (default: 1)',
+              ),
+              keyboardType: TextInputType.number,
             ),
             const SizedBox(height: AppTheme.spacing),
             CheckboxListTile(

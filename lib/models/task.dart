@@ -28,6 +28,19 @@ class Task extends HiveObject {
   @HiveField(7)
   bool isRecurring;
 
+  @HiveField(8)
+  int? _targetCount;
+
+  @HiveField(9)
+  int? _currentCount;
+
+  @HiveField(10)
+  String? recurrenceId;
+
+  // Getters that provide defaults for backward compatibility
+  int get targetCount => _targetCount ?? 1;
+  int get currentCount => _currentCount ?? 0;
+
   Task({
     required this.id,
     required this.title,
@@ -37,7 +50,11 @@ class Task extends HiveObject {
     required this.cadence,
     required this.timePeriodId,
     this.isRecurring = false,
-  });
+    int? targetCount,
+    int? currentCount,
+    this.recurrenceId = "",
+  }) : _targetCount = targetCount,
+       _currentCount = currentCount;
 
   Task copyWith({
     String? id,
@@ -48,6 +65,9 @@ class Task extends HiveObject {
     String? cadence,
     String? timePeriodId,
     bool? isRecurring,
+    int? targetCount,
+    int? currentCount,
+    String? recurrenceId,
   }) {
     return Task(
       id: id ?? this.id,
@@ -58,6 +78,9 @@ class Task extends HiveObject {
       cadence: cadence ?? this.cadence,
       timePeriodId: timePeriodId ?? this.timePeriodId,
       isRecurring: isRecurring ?? this.isRecurring,
+      targetCount: targetCount ?? this.targetCount,
+      currentCount: currentCount ?? this.currentCount,
+      recurrenceId: recurrenceId ?? this.recurrenceId,
     );
   }
 }
