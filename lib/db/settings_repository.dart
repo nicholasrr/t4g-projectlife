@@ -18,9 +18,9 @@ class SettingsRepository {
   }
 
   /// Gets the current sort mode for tasks.
-  /// Returns null if no sort mode has been set.
-  String? getSortMode() {
-    return _settingsBox.get(sortModeKey);
+  /// Defaults to 'category_asc' if no sort mode has been set.
+  String getSortMode() {
+    return _settingsBox.get(sortModeKey, defaultValue: 'category_asc');
   }
 
   /// Sets the sort mode for tasks.

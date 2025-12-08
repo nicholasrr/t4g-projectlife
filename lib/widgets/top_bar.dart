@@ -88,95 +88,143 @@ class TopBar extends StatelessWidget {
             },
           ),
 
-          // Filter button with optional active indicator
-          Stack(
+          // Sort and Filter buttons
+          Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
+              // Sort button
               IconButton(
-                icon: const Icon(AppTheme.filterIcon),
+                icon: const Icon(Icons.sort),
                 onPressed: () async {
-                  // Load categories
-                  final cats = CategoryRepository().getAllCategories();
-                  // Current selection
-                  final current = Set<String>.from(
-                    Globals.selectedCategoryIds.value,
-                  );
+                  final settings = SettingsRepository();
+                  final currentSort = settings.getSortMode();
 
-                  // Show dialog to pick categories
-                  final result = await showDialog<Set<String>>(
+                  final result = await showDialog<String>(
                     context: context,
                     builder: (context) {
+                      String selected = currentSort;
                       return StatefulBuilder(
                         builder: (context, setState) {
                           return AlertDialog(
-                            title: const Text('Filter by category'),
+                            title: const Text('Sort tasks'),
                             content: SizedBox(
-                              width: 320,
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Uncategorized checkbox at the top
-                                    CheckboxListTile(
-                                      value: current.contains(
-                                        Globals.uncategorizedKey,
-                                      ),
-                                      onChanged:
-                                          (v) => setState(() {
-                                            if (v == true) {
-                                              current.add(
-                                                Globals.uncategorizedKey,
-                                              );
-                                            } else {
-                                              current.remove(
-                                                Globals.uncategorizedKey,
-                                              );
-                                            }
-                                          }),
-                                      title: Row(
-                                        children: [
-                                          Container(
-                                            width: 12,
-                                            height: 12,
-                                            margin: const EdgeInsets.only(
-                                              right: 8,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color:
-                                                  Theme.of(
-                                                    context,
-                                                  ).colorScheme.surface,
-                                              borderRadius:
-                                                  BorderRadius.circular(3),
-                                              border: Border.all(
-                                                color:
-                                                    Theme.of(
-                                                      context,
-                                                    ).dividerColor,
-                                              ),
-                                            ),
+                              width: 280,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  RadioListTile<String>(
+                                    value: 'none',
+                                    groupValue: selected,
+                                    onChanged: (v) {
+                                      if (v != null)
+                                        setState(() => selected = v);
+                                    },
+                                    title: const Text('No sorting'),
+                                  ),
+                                  RadioListTile<String>(
+                                    value: 'title_asc',
+                                    groupValue: selected,
+                                    onChanged: (v) {
+                                      if (v != null)
+                                        setState(() => selected = v);
+                                    },
+                                    title: const Text('Title (A-Z)'),
+                                  ),
+                                  RadioListTile<String>(
+                                    value: 'title_desc',
+                                    groupValue: selected,
+                                    onChanged: (v) {
+                                      if (v != null)
+                                        setState(() => selected = v);
+                                    },
+                                    title: const Text('Title (Z-A)'),
+                                  ),
+                                  RadioListTile<String>(
+                                    value: 'category_asc',
+                                    groupValue: selected,
+                                    onChanged: (v) {
+                                      if (v != null)
+                                        setState(() => selected = v);
+                                    },
+                                    title: const Text('Category (A-Z)'),
+                                  ),
+                                  RadioListTile<String>(
+                                    value: 'category_desc',
+                                    groupValue: selected,
+                                    onChanged: (v) {
+                                      if (v != null)
+                                        setState(() => selected = v);
+                                    },
+                                    title: const Text('Category (Z-A)'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, null),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed:
+                                    () => Navigator.pop(context, selected),
+                                child: const Text('Apply'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  );
+
+                  if (result != null) {
+                    await settings.setSortMode(result);
+                    Globals.tasksVersion.value++;
+                  }
+                },
+              ),
+              // Filter button with optional active indicator
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(AppTheme.filterIcon),
+                    onPressed: () async {
+                      // Load categories
+                      final cats = CategoryRepository().getAllCategories();
+                      // Current selection
+                      final current = Set<String>.from(
+                        Globals.selectedCategoryIds.value,
+                      );
+
+                      // Show dialog to pick categories
+                      final result = await showDialog<Set<String>>(
+                        context: context,
+                        builder: (context) {
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              return AlertDialog(
+                                title: const Text('Filter by category'),
+                                content: SizedBox(
+                                  width: 320,
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Uncategorized checkbox at the top
+                                        CheckboxListTile(
+                                          value: current.contains(
+                                            Globals.uncategorizedKey,
                                           ),
-                                          const Text('Uncategorized'),
-                                        ],
-                                      ),
-                                    ),
-                                    if (cats.isEmpty)
-                                      const Padding(
-                                        padding: EdgeInsets.only(top: 8.0),
-                                        child: Text('No categories defined'),
-                                      )
-                                    else
-                                      ...cats.map((c) {
-                                        final isSelected = current.contains(
-                                          c.id,
-                                        );
-                                        return CheckboxListTile(
-                                          value: isSelected,
                                           onChanged:
                                               (v) => setState(() {
                                                 if (v == true) {
-                                                  current.add(c.id);
+                                                  current.add(
+                                                    Globals.uncategorizedKey,
+                                                  );
                                                 } else {
-                                                  current.remove(c.id);
+                                                  current.remove(
+                                                    Globals.uncategorizedKey,
+                                                  );
                                                 }
                                               }),
                                           title: Row(
@@ -188,69 +236,126 @@ class TopBar extends StatelessWidget {
                                                   right: 8,
                                                 ),
                                                 decoration: BoxDecoration(
-                                                  color: Color(
-                                                    int.parse(c.colorHex),
-                                                  ),
+                                                  color:
+                                                      Theme.of(
+                                                        context,
+                                                      ).colorScheme.surface,
                                                   borderRadius:
                                                       BorderRadius.circular(3),
+                                                  border: Border.all(
+                                                    color:
+                                                        Theme.of(
+                                                          context,
+                                                        ).dividerColor,
+                                                  ),
                                                 ),
                                               ),
-                                              Text(c.title),
+                                              const Text('Uncategorized'),
                                             ],
                                           ),
-                                        );
-                                      }).toList(),
-                                  ],
+                                        ),
+                                        if (cats.isEmpty)
+                                          const Padding(
+                                            padding: EdgeInsets.only(top: 8.0),
+                                            child: Text(
+                                              'No categories defined',
+                                            ),
+                                          )
+                                        else
+                                          ...cats.map((c) {
+                                            final isSelected = current.contains(
+                                              c.id,
+                                            );
+                                            return CheckboxListTile(
+                                              value: isSelected,
+                                              onChanged:
+                                                  (v) => setState(() {
+                                                    if (v == true) {
+                                                      current.add(c.id);
+                                                    } else {
+                                                      current.remove(c.id);
+                                                    }
+                                                  }),
+                                              title: Row(
+                                                children: [
+                                                  Container(
+                                                    width: 12,
+                                                    height: 12,
+                                                    margin:
+                                                        const EdgeInsets.only(
+                                                          right: 8,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Color(
+                                                        int.parse(c.colorHex),
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            3,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  Text(c.title),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                      ],
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed:
-                                    () => Navigator.pop(context, <String>{}),
-                                child: const Text('Clear'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, null),
-                                child: const Text('Cancel'),
-                              ),
-                              ElevatedButton(
-                                onPressed:
-                                    () => Navigator.pop(context, current),
-                                child: const Text('Apply'),
-                              ),
-                            ],
+                                actions: [
+                                  TextButton(
+                                    onPressed:
+                                        () =>
+                                            Navigator.pop(context, <String>{}),
+                                    child: const Text('Clear'),
+                                  ),
+                                  TextButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, null),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed:
+                                        () => Navigator.pop(context, current),
+                                    child: const Text('Apply'),
+                                  ),
+                                ],
+                              );
+                            },
                           );
                         },
                       );
-                    },
-                  );
 
-                  if (result != null) {
-                    // result == empty set means clear filter
-                    Globals.setSelectedCategories(result);
-                  }
-                },
-              ),
-              // show a small indicator dot when filter is active
-              ValueListenableBuilder<Set<String>>(
-                valueListenable: Globals.selectedCategoryIds,
-                builder:
-                    (_, categories, __) => Positioned(
-                      right: 6,
-                      top: 6,
-                      child:
-                          categories.isNotEmpty
-                              ? Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                              )
-                              : const SizedBox.shrink(),
-                    ),
+                      if (result != null) {
+                        // result == empty set means clear filter
+                        Globals.setSelectedCategories(result);
+                      }
+                    },
+                  ),
+                  // show a small indicator dot when filter is active
+                  ValueListenableBuilder<Set<String>>(
+                    valueListenable: Globals.selectedCategoryIds,
+                    builder:
+                        (_, categories, __) => Positioned(
+                          right: 6,
+                          top: 6,
+                          child:
+                              categories.isNotEmpty
+                                  ? Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  )
+                                  : const SizedBox.shrink(),
+                        ),
+                  ),
+                ],
               ),
             ],
           ),

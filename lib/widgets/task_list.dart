@@ -158,10 +158,78 @@ class TaskList extends StatelessWidget {
                         }).toList()
                         : baseFiltered;
 
+                // Apply sorting
+                final sortMode = SettingsRepository().getSortMode();
+                final categoryRepo = CategoryRepository();
+
+                void applySorting(List<Task> taskList) {
+                  switch (sortMode) {
+                    case 'title_asc':
+                      taskList.sort(
+                        (a, b) => a.title.toLowerCase().compareTo(
+                          b.title.toLowerCase(),
+                        ),
+                      );
+                      break;
+                    case 'title_desc':
+                      taskList.sort(
+                        (a, b) => b.title.toLowerCase().compareTo(
+                          a.title.toLowerCase(),
+                        ),
+                      );
+                      break;
+                    case 'category_asc':
+                      taskList.sort((a, b) {
+                        final catA =
+                            a.categoryId != null
+                                ? categoryRepo
+                                        .getCategory(a.categoryId!)
+                                        ?.title ??
+                                    ''
+                                : '';
+                        final catB =
+                            b.categoryId != null
+                                ? categoryRepo
+                                        .getCategory(b.categoryId!)
+                                        ?.title ??
+                                    ''
+                                : '';
+                        return catA.toLowerCase().compareTo(catB.toLowerCase());
+                      });
+                      break;
+                    case 'category_desc':
+                      taskList.sort((a, b) {
+                        final catA =
+                            a.categoryId != null
+                                ? categoryRepo
+                                        .getCategory(a.categoryId!)
+                                        ?.title ??
+                                    ''
+                                : '';
+                        final catB =
+                            b.categoryId != null
+                                ? categoryRepo
+                                        .getCategory(b.categoryId!)
+                                        ?.title ??
+                                    ''
+                                : '';
+                        return catB.toLowerCase().compareTo(catA.toLowerCase());
+                      });
+                      break;
+                    case 'none':
+                    default:
+                      // No sorting
+                      break;
+                  }
+                }
+
                 final completedTasks =
                     filtered.where((t) => t.completed).toList();
                 final incompleteTasks =
                     filtered.where((t) => !t.completed).toList();
+
+                applySorting(completedTasks);
+                applySorting(incompleteTasks);
 
                 // If no tasks available, show an empty state message
                 if (filtered.isEmpty) {
