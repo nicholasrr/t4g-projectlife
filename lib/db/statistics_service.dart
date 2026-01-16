@@ -80,6 +80,7 @@ class StatisticsService {
         TaskStatistics(
           recurrenceId: recurrenceId,
           taskTitle: mostRecentTask.title,
+          cadence: _resolveCadence(mostRecentTask.cadence),
           completedCount: completedCount,
           expectedCount: expectedCount,
         ),
@@ -93,6 +94,7 @@ class StatisticsService {
   }
 
   // Helper methods to get overlapping periods
+  // TODO: Merge with methods from utils.dart
   List<String> _getDaysInMonth(String monthId) {
     // M#2025-12 -> days from D#2025-12-01 to D#2025-12-31
     final date = _parseMonthId(monthId);
@@ -264,5 +266,22 @@ class StatisticsService {
 
   String _formatWeekId(DateTime sundayDate) {
     return 'W#${sundayDate.year}-${sundayDate.month.toString().padLeft(2, '0')}-${sundayDate.day.toString().padLeft(2, '0')}';
+  }
+
+  String _resolveCadence(String cadence) {
+    switch (cadence) {
+      case 'D':
+        return 'daily';
+      case 'W':
+        return 'weekly';
+      case 'M':
+        return 'monthly';
+      case 'Q':
+        return 'quarterly';
+      case 'Y':
+        return 'yearly';
+      default:
+        return 'unknown';
+    }
   }
 }

@@ -105,7 +105,10 @@ class TaskList extends StatelessWidget {
                                 'Switch between Recurring and Ad-hoc to view the tasks of each type.\n'
                                 'Tap the + button to quickly add a task to the current time period.\n'
                                 'Use the time period header to navigate between periods.\n'
-                                'Swipe left or right on a task to complete or delete it.',
+                                'Swipe left or right on a task to complete or delete it.\n'
+                                'Tap on a task to edit its details.\n'
+                                'Use the category filter (top right) to filter tasks by category.\n'
+                                'See statistics for recurring tasks of shorter periods by selecting "Statistics".',
                               ),
                               const SizedBox(height: AppTheme.spacing * 1.5),
                               Align(
@@ -641,7 +644,7 @@ class _StatisticsItem extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    stat.taskTitle,
+                    "${stat.taskTitle} (${stat.cadence})",
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

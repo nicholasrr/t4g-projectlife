@@ -2,12 +2,14 @@
 class TaskStatistics {
   final String recurrenceId;
   final String taskTitle; // Most recent title
+  final String cadence;
   final int completedCount;
   final int expectedCount;
 
   TaskStatistics({
     required this.recurrenceId,
     required this.taskTitle,
+    required this.cadence,
     required this.completedCount,
     required this.expectedCount,
   });
