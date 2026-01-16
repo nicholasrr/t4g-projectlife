@@ -42,6 +42,13 @@ class _TypeSelectorState extends State<TypeSelector> {
             onTap: () => setState(() => Globals.setAdHoc()),
           ),
           _TypeButton(
+            icon: Icons.bar_chart,
+            label: 'Statistics',
+            isSelected:
+                Globals.selectedTypeNotifier.value == SelectedType.statistics,
+            onTap: () => setState(() => Globals.setStatistics()),
+          ),
+          _TypeButton(
             icon: Icons.help,
             label: 'How-to',
             isSelected:
@@ -95,7 +102,8 @@ class _TypeButton extends StatelessWidget {
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.primary,
                   ),
-                  if (selectedType == SelectedType.howto) ...[
+                  if (selectedType == SelectedType.howto ||
+                      selectedType == SelectedType.statistics) ...[
                     const SizedBox(height: AppTheme.spacing / 2),
                     Text(
                       label,

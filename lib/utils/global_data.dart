@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 
-enum SelectedType { all, recurring, adhoc, howto }
+enum SelectedType { all, recurring, adhoc, statistics, howto }
 
 class Globals {
   bool isDarkMode = false;
@@ -26,6 +26,10 @@ class Globals {
 
   static setAdHoc() {
     selectedTypeNotifier.value = SelectedType.adhoc;
+  }
+
+  static setStatistics() {
+    selectedTypeNotifier.value = SelectedType.statistics;
   }
 
   static setHowTo() {

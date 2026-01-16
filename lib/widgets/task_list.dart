@@ -5,6 +5,7 @@ import '../theme.dart';
 import '../screens/task_detail_screen.dart';
 import '../screens/manage_categories_screen.dart';
 import '../utils/global_data.dart';
+import '../db/statistics_service.dart';
 
 /// The main scrollable list of tasks
 class TaskList extends StatelessWidget {
@@ -30,6 +31,58 @@ class TaskList extends StatelessWidget {
             return ValueListenableBuilder<Set<String>>(
               valueListenable: Globals.selectedCategoryIds,
               builder: (_, selectedCategories, __) {
+                // If showing statistics, render recurring task statistics
+                if (selectedType == SelectedType.statistics) {
+                  final statsService = StatisticsService();
+                  final taskRepo = TaskRepository();
+
+                  // Get all overlapping periods
+                  final overlappingPeriods = statsService.getOverlappingPeriods(
+                    timePeriodId,
+                  );
+
+                  // Load all tasks from overlapping periods
+                  final allTasksFromPeriods = <Task>[];
+                  for (final periodId in overlappingPeriods) {
+                    allTasksFromPeriods.addAll(
+                      taskRepo.getTasksForPeriod(periodId),
+                    );
+                  }
+
+                  // Calculate statistics
+                  final stats = statsService.calculateStatistics(
+                    timePeriodId,
+                    allTasksFromPeriods,
+                  );
+
+                  if (stats.isEmpty) {
+                    return CustomScrollView(
+                      slivers: [
+                        SliverFillRemaining(
+                          hasScrollBody: false,
+                          child: Center(
+                            child: Text(
+                              'No recurring task statistics available for this period.',
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return CustomScrollView(
+                    slivers: [
+                      SliverList(
+                        delegate: SliverChildBuilderDelegate((context, index) {
+                          final stat = stats[index];
+                          return _StatisticsItem(stat: stat);
+                        }, childCount: stats.length),
+                      ),
+                    ],
+                  );
+                }
+
                 // If showing how-to, render explanatory text instead of tasks
                 if (selectedType == SelectedType.howto) {
                   return CustomScrollView(
@@ -541,6 +594,99 @@ class _TaskItemState extends State<_TaskItem> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Statistics item showing recurring task completion stats
+class _StatisticsItem extends StatelessWidget {
+  final dynamic stat; // TaskStatistics
+
+  const _StatisticsItem({required this.stat});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isComplete = stat.completedCount >= stat.expectedCount;
+    final completionRate = stat.completionRate;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppTheme.padding,
+        vertical: AppTheme.spacing / 2,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.shadowColor.withValues(alpha: 0.1),
+            blurRadius: AppTheme.radius,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.padding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    stat.taskTitle,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (isComplete)
+                  Icon(Icons.check_circle, color: theme.colorScheme.primary),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacing),
+            // Completion info
+            Text(
+              '${stat.completedCount}/${stat.expectedCount} completed',
+              style: theme.textTheme.bodyMedium,
+            ),
+            const SizedBox(height: AppTheme.spacing / 2),
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: completionRate / 100,
+                minHeight: 8,
+                backgroundColor: theme.colorScheme.onSurface.withValues(
+                  alpha: 0.1,
+                ),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  completionRate >= 100
+                      ? theme.colorScheme.primary
+                      : completionRate >= 50
+                      ? Colors.orange
+                      : theme.colorScheme.error,
+                ),
+              ),
+            ),
+            const SizedBox(height: AppTheme.spacing / 2),
+            // Percentage
+            Text(
+              '${completionRate.toStringAsFixed(1)}%',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+          ],
         ),
       ),
     );
