@@ -102,8 +102,7 @@ class _TypeButton extends StatelessWidget {
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.primary,
                   ),
-                  if (selectedType == SelectedType.howto ||
-                      selectedType == SelectedType.statistics) ...[
+                  if (selectedType == SelectedType.howto) ...[
                     const SizedBox(height: AppTheme.spacing / 2),
                     Text(
                       label,
