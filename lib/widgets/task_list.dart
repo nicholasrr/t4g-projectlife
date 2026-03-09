@@ -51,7 +51,6 @@ class TaskList extends StatelessWidget {
 
                   // Calculate statistics
                   final stats = statsService.calculateStatistics(
-                    timePeriodId,
                     allTasksFromPeriods,
                   );
 
@@ -308,57 +307,126 @@ class TaskList extends StatelessWidget {
                   );
                 }
 
-                return CustomScrollView(
-                  slivers: [
-                    // Incomplete tasks
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => _TaskItem(
-                          task: incompleteTasks[index],
-                          key: ValueKey(incompleteTasks[index].id),
+                List<Widget> slivers = [];
+                slivers.addAll(getSlivers(context, incompleteTasks, false));
+
+                // Completed tasks (if any)
+                if (completedTasks.isNotEmpty) {
+                  // "Completed" header
+                  slivers.add(
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppTheme.padding),
+                        child: Text(
+                          'Completed',
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge!.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
                         ),
-                        childCount: incompleteTasks.length,
                       ),
                     ),
+                  );
 
-                    // Completed tasks (if any)
-                    if (completedTasks.isNotEmpty) ...[
-                      // "Completed" header
-                      SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppTheme.padding),
-                          child: Text(
-                            'Completed',
-                            style: Theme.of(
-                              context,
-                            ).textTheme.titleSmall!.copyWith(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.5),
-                            ),
-                          ),
-                        ),
-                      ),
+                  // Completed task items
+                  slivers.addAll(getSlivers(context, completedTasks, true));
+                }
 
-                      // Completed task items
-                      SliverList(
-                        delegate: SliverChildBuilderDelegate(
-                          (context, index) => _TaskItem(
-                            task: completedTasks[index],
-                            key: ValueKey(completedTasks[index].id),
-                          ),
-                          childCount: completedTasks.length,
-                        ),
-                      ),
-                    ],
-                  ],
-                );
+                return CustomScrollView(slivers: slivers);
               },
             );
           },
         );
       },
     );
+  }
+
+  String getCadenceDisplayString(String cadence) {
+    switch (cadence) {
+      case 'D':
+        return 'Daily Tasks';
+      case 'W':
+        return 'Weekly Tasks';
+      case 'M':
+        return 'Monthly Tasks';
+      case 'Q':
+        return 'Quarterly Tasks';
+      case 'Y':
+        return 'Yearly Tasks';
+      default:
+        return '';
+    }
+  }
+
+  List<Widget> getSlivers(
+    BuildContext context,
+    List<Task> tasks,
+    bool isCompletedSection,
+  ) {
+    final List<Widget> slivers = [];
+    for (final cadence in ['D', 'W', 'M', 'Q', 'Y']) {
+      final cadenceTasks = tasks.where((t) => t.cadence == cadence).toList();
+      bool shouldShowCadenceHeader =
+          timePeriodId == 'A' &&
+          (cadenceTasks.isNotEmpty || !isCompletedSection);
+      if (shouldShowCadenceHeader) {
+        // Do not show title for completed section if there are no tasks, to avoid cluttering the UI
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.padding),
+              child: Text(
+                getCadenceDisplayString(cadence),
+                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      if (shouldShowCadenceHeader && cadenceTasks.isEmpty) {
+        // If we are showing the title but there are no tasks, show something.
+        slivers.add(
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppTheme.padding,
+                vertical: AppTheme.spacing / 2,
+              ),
+              child: Text(
+                'No ${getCadenceDisplayString(cadence).toLowerCase()}',
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+          ),
+        );
+      } else {
+        slivers.add(
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _TaskItem(
+                task: cadenceTasks[index],
+                key: ValueKey(cadenceTasks[index].id),
+              ),
+              childCount: cadenceTasks.length,
+            ),
+          ),
+        );
+      }
+    }
+    return slivers;
   }
 }
 
@@ -540,7 +608,15 @@ class _TaskItemState extends State<_TaskItem> {
                     widget.task.description!.isNotEmpty) ...[
                   const SizedBox(height: AppTheme.spacing / 2),
                   Text(
-                    widget.task.description!,
+                    widget.task.description!
+                            .replaceAll('\n', ' ')
+                            .substring(
+                              0,
+                              widget.task.description!.length > 100
+                                  ? 100
+                                  : widget.task.description!.length,
+                            ) +
+                        (widget.task.description!.length > 100 ? '...' : ''),
                     style: theme.textTheme.bodyMedium,
                   ),
                 ],

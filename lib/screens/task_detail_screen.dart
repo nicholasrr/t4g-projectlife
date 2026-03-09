@@ -170,31 +170,33 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     if (existing != null) {
       final updated = existing.copyWith(
         title: title,
-        description:
-            _descriptionController.text.trim().isEmpty
-                ? null
-                : _descriptionController.text.trim(),
+        description: _descriptionController.text.trim(),
         isRecurring: _isRecurring,
         categoryId: _selectedCategoryId,
         targetCount: targetCount,
       );
       await TaskRepository().editTask(updated);
     } else {
-      final cadence =
-          widget.initialTimePeriodId.isNotEmpty
-              ? widget.initialTimePeriodId[0]
-              : 'D';
+      final String targetPeriod;
+      final String cadence;
+      if (widget.initialTimePeriodId.isNotEmpty &&
+          widget.initialTimePeriodId != 'A') {
+        // If initial period provided (and not 'All'), use it
+        targetPeriod = widget.initialTimePeriodId;
+        cadence = widget.initialTimePeriodId[0];
+      } else {
+        // Save to the day if the target period is not specified
+        targetPeriod = getCurrentTimePeriodId('D');
+        cadence = 'D';
+      }
       final task = Task(
         id: generateTaskId(widget.initialTimePeriodId),
         title: title,
-        description:
-            _descriptionController.text.trim().isEmpty
-                ? null
-                : _descriptionController.text.trim(),
+        description: _descriptionController.text.trim(),
         categoryId: _selectedCategoryId,
         completed: false,
         cadence: cadence,
-        timePeriodId: widget.initialTimePeriodId,
+        timePeriodId: targetPeriod,
         isRecurring: _isRecurring,
         targetCount: targetCount,
         recurrenceId: generateId(),

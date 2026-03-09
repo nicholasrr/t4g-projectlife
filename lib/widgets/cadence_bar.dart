@@ -47,6 +47,12 @@ class _CadenceBarState extends State<CadenceBar> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _CadenceButton(
+            label: 'A',
+            fullLabel: 'All',
+            isSelected: selectedCadence == 'A',
+            onTap: () => _onCadenceSelected('A'),
+          ),
+          _CadenceButton(
             label: 'D',
             fullLabel: 'Day',
             isSelected: selectedCadence == 'D',

@@ -219,6 +219,10 @@ String getNextTimePeriodId(String periodId) {
 }
 
 String getCurrentTimePeriodId(String cadence) {
+  if (cadence == 'A') {
+    // For 'All' cadence, we display all tasks so its a special handling
+    return 'A';
+  }
   final now = DateTime.now();
   return _getTimePeriodId(now, cadence);
 }

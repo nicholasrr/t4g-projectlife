@@ -1,3 +1,5 @@
+import 'package:projectlife/utils/utils.dart';
+
 import '../models/task.dart';
 import '../models/task_statistics.dart';
 
@@ -11,6 +13,7 @@ class StatisticsService {
 
     switch (cadence) {
       case 'Y': // Year -> get all quarters, months, weeks, days
+        periods.addAll(_getQuartersInYear(periodId));
         periods.addAll(_getMonthsInYear(periodId));
         periods.addAll(_getWeeksInYear(periodId));
         periods.addAll(_getDaysInYear(periodId));
@@ -29,6 +32,13 @@ class StatisticsService {
         break;
       case 'D': // Day -> no smaller granularity
         break;
+      case 'A': // All -> same as year\
+        String displayPeriod = getCurrentTimePeriodId('Y');
+        periods.addAll(_getQuartersInYear(displayPeriod));
+        periods.addAll(_getMonthsInYear(displayPeriod));
+        periods.addAll(_getWeeksInYear(displayPeriod));
+        periods.addAll(_getDaysInYear(displayPeriod));
+        break;
     }
 
     return periods;
@@ -36,7 +46,6 @@ class StatisticsService {
 
   /// Calculate statistics for all recurring tasks in the overlapping periods
   List<TaskStatistics> calculateStatistics(
-    String periodId,
     List<Task> tasksFromOverlappingPeriods,
   ) {
     // Group tasks by recurrence ID
@@ -173,20 +182,15 @@ class StatisticsService {
     return weeks.toList();
   }
 
-  List<String> _getDaysInYear(String yearId) {
-    // Y#2025 -> all days of 2025
+  List<String> _getQuartersInYear(String yearId) {
     final year = int.parse(yearId.split('#')[1]);
-    final days = <String>[];
+    final quarters = <String>[];
 
-    for (int month = 1; month <= 12; month++) {
-      final lastDay = DateTime(year, month + 1, 0).day;
-      for (int day = 1; day <= lastDay; day++) {
-        final dayDate = DateTime(year, month, day);
-        days.add(_formatDayId(dayDate));
-      }
+    for (int quarter = 1; quarter <= 4; quarter++) {
+      quarters.add('Q#$year-$quarter');
     }
 
-    return days;
+    return quarters;
   }
 
   List<String> _getMonthsInYear(String yearId) {
@@ -215,6 +219,22 @@ class StatisticsService {
     }
 
     return weeks.toList();
+  }
+
+  List<String> _getDaysInYear(String yearId) {
+    // Y#2025 -> all days of 2025
+    final year = int.parse(yearId.split('#')[1]);
+    final days = <String>[];
+
+    for (int month = 1; month <= 12; month++) {
+      final lastDay = DateTime(year, month + 1, 0).day;
+      for (int day = 1; day <= lastDay; day++) {
+        final dayDate = DateTime(year, month, day);
+        days.add(_formatDayId(dayDate));
+      }
+    }
+
+    return days;
   }
 
   List<String> _getDaysInWeek(String weekId) {

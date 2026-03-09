@@ -1,4 +1,5 @@
 import 'package:hive/hive.dart';
+import 'package:projectlife/utils/utils.dart';
 import '../models/task.dart';
 import 'hive_boxes.dart';
 import '../utils/global_data.dart';
@@ -84,6 +85,15 @@ class TaskRepository {
   /// Gets all tasks for a specific time period.
   /// If a task references a category that no longer exists, its categoryId will be cleared.
   List<Task> getTasksForPeriod(String timePeriodId) {
+    if (timePeriodId == 'A') {
+      List<Task> allTasks = [];
+      for (final cadence in ['D', 'W', 'M', 'Q', 'Y']) {
+        final periodId = getCurrentTimePeriodId(cadence);
+        allTasks.addAll(getTasksForPeriod(periodId));
+      }
+      return allTasks;
+    }
+
     final taskIds =
         _taskIndexBox.get(timePeriodId, defaultValue: <String>[]) as List;
     final categoryBox = Hive.box(categoriesBoxName);

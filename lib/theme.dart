@@ -84,4 +84,5 @@ class AppTheme {
   static const IconData completeIcon = Icons.check_circle;
   static const IconData categoryIcon = Icons.label;
   static const IconData engineIcon = Icons.build;
+  static const IconData resetIcon = Icons.refresh;
 }

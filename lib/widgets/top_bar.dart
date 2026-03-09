@@ -11,7 +11,9 @@ import '../utils/global_data.dart';
 
 /// Top bar with engine/settings button, filter button
 class TopBar extends StatelessWidget {
-  const TopBar({super.key});
+  final VoidCallback? onReset;
+
+  const TopBar({super.key, this.onReset});
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +89,9 @@ class TopBar extends StatelessWidget {
               }
             },
           ),
+
+          // Reset button
+          IconButton(icon: const Icon(AppTheme.resetIcon), onPressed: onReset),
 
           // Sort and Filter buttons
           Row(

@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _handlePeriodChange(String newPeriodId, bool applyBackfill) {
-    if (applyBackfill) {
+    if (applyBackfill && newPeriodId != 'A') {
       _backfillPeriod(newPeriodId);
     }
 
@@ -138,7 +138,12 @@ class _HomeScreenState extends State<HomeScreen> {
             // Top bar with engine/settings, period, and filter
             SizedBox(
               height: availableHeight * AppTheme.buttonHeightRatio,
-              child: const TopBar(),
+              child: TopBar(
+                onReset: () => _handlePeriodChange(
+                  getCurrentTimePeriodId(extractCadence(_selectedPeriodId)),
+                  false,
+                ),
+              ),
             ),
 
             // Time period navigator
