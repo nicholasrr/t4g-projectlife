@@ -39,13 +39,12 @@ jobs:
       - name: Build iOS IPA
         run: flutter build ipa --release --no-codesign
 
-      # Step 6: Find and extract the built IPA/Payload directory to share
-      # This compresses the build outputs so it's ready for download
+      # Step 6: Package the un-coded build into a deployable payload structure
       - name: Prepare Artifacts
         run: |
           mkdir -p build/ios/artifacts
-          cd build/ios/iphoneos
-          zip -r ../artifacts/Runner.ipa Runner.app
+          cd build/ios/archive/Runner.xcarchive/Products/Applications
+          zip -r ../../../artifacts/Runner.ipa Runner.app
 
       # Step 7: Upload the finished bundle back to your GitHub repository dashboard
       - name: Upload IPA Artifact
