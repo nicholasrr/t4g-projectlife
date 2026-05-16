@@ -4,6 +4,7 @@ import '../db/repositories.dart';
 import '../theme.dart';
 import '../screens/task_detail_screen.dart';
 import '../screens/manage_categories_screen.dart';
+import '../screens/manage_notifications_screen.dart';
 import '../utils/global_data.dart';
 import '../db/statistics_service.dart';
 
@@ -124,6 +125,24 @@ class TaskList extends StatelessWidget {
                                   },
                                   child: const Text(
                                     'Click here to manage categories',
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppTheme.spacing),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) =>
+                                                const ManageNotificationsScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: const Text(
+                                    'Click here to manage notifications',
                                   ),
                                 ),
                               ),

@@ -9,6 +9,7 @@ class Globals {
       ValueNotifier<SelectedType>(SelectedType.recurring);
   // Simple version counter to notify that tasks changed (create/edit/delete)
   static final ValueNotifier<int> tasksVersion = ValueNotifier<int>(0);
+  static final ValueNotifier<int> notificationsVersion = ValueNotifier<int>(0);
   // Selected category ids for filtering (empty = no filter)
   static final ValueNotifier<Set<String>> selectedCategoryIds =
       ValueNotifier<Set<String>>(<String>{});

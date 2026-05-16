@@ -3,8 +3,10 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'models/task.dart';
 import 'models/category.dart';
 import 'models/time_period.dart';
+import 'models/notification_rule.dart';
 import 'db/hive_boxes.dart';
 import 'db/repositories.dart';
+import 'services/notification_service.dart';
 import 'theme.dart';
 import 'screens/home_screen.dart';
 
@@ -18,9 +20,11 @@ void main() async {
   Hive.registerAdapter(TaskAdapter());
   Hive.registerAdapter(CategoryAdapter());
   Hive.registerAdapter(TimePeriodAdapter());
+  Hive.registerAdapter(NotificationRuleAdapter());
 
   // Open boxes
   await openHiveBoxes();
+  await NotificationService.instance.initialize();
 
   runApp(const ProjectLifeApp());
 }

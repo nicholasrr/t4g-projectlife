@@ -6,6 +6,7 @@ import '../widgets/time_period_header.dart';
 import '../widgets/type_selector.dart';
 import '../widgets/top_bar.dart';
 import '../db/repositories.dart';
+import '../services/notification_service.dart';
 import '../utils/utils.dart';
 import 'task_detail_screen.dart';
 import '../models/task.dart';
@@ -25,10 +26,18 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    NotificationService.instance.setNavigationCallback(
+      _handleNotificationNavigation,
+    );
     // Try to get the last selected cadence from settings, use 'D'ay if none
     var cadence = _settings.getSelectedTimeCadence() ?? 'D';
     _selectedPeriodId = getCurrentTimePeriodId(cadence);
     _handlePeriodChange(getCurrentTimePeriodId(cadence), true);
+  }
+
+  void _handleNotificationNavigation(String periodId) {
+    if (!mounted) return;
+    _handlePeriodChange(periodId, true);
   }
 
   void _handlePeriodChange(String newPeriodId, bool applyBackfill) {
@@ -139,10 +148,11 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: availableHeight * AppTheme.buttonHeightRatio,
               child: TopBar(
-                onReset: () => _handlePeriodChange(
-                  getCurrentTimePeriodId(extractCadence(_selectedPeriodId)),
-                  false,
-                ),
+                onReset:
+                    () => _handlePeriodChange(
+                      getCurrentTimePeriodId(extractCadence(_selectedPeriodId)),
+                      false,
+                    ),
               ),
             ),
 

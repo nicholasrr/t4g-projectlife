@@ -10,6 +10,7 @@ const tasksBoxName = 'tasks';
 const taskIndexBoxName = 'taskIndex'; // Maps time periods to task IDs
 const categoriesBoxName = 'categories';
 const timePeriodsBoxName = 'timePeriods';
+const notificationRulesBoxName = 'notificationRules';
 const settingsBoxName = 'settings';
 
 // Settings keys
@@ -25,6 +26,7 @@ Future<void> openHiveBoxes() async {
     Hive.openBox(taskIndexBoxName),
     Hive.openBox(categoriesBoxName),
     Hive.openBox(timePeriodsBoxName),
+    Hive.openBox(notificationRulesBoxName),
     Hive.openBox(settingsBoxName),
   ]);
 }
