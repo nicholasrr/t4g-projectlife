@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:projectlife/utils/global_data.dart';
 import '../theme.dart';
 import '../widgets/cadence_bar.dart';
 import '../widgets/task_list.dart';
@@ -35,9 +36,13 @@ class _HomeScreenState extends State<HomeScreen> {
     _handlePeriodChange(getCurrentTimePeriodId(cadence), true);
   }
 
-  void _handleNotificationNavigation(String periodId) {
+  void _handleNotificationNavigation(String cadence) {
     if (!mounted) return;
-    _handlePeriodChange(periodId, true);
+
+    // Pop to the home screen
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _handlePeriodChange(getCurrentTimePeriodId(cadence), true);
+    Globals.setAll();
   }
 
   void _handlePeriodChange(String newPeriodId, bool applyBackfill) {
@@ -86,26 +91,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final previousPeriodId = getPreviousTimePeriodId(periodId);
     await _backfillPeriod(previousPeriodId);
 
-    final previousRecurringTasks =
-        taskRepository
-            .getTasksForPeriod(previousPeriodId)
-            .where((task) => task.isRecurring)
-            .toList();
-    final previousIncompleteTasks =
-        taskRepository
-            .getTasksForPeriod(previousPeriodId)
-            .where((task) => !task.isRecurring && !task.completed)
-            .toList();
+    final previousRecurringTasks = taskRepository
+        .getTasksForPeriod(previousPeriodId)
+        .where((task) => task.isRecurring)
+        .toList();
+    final previousIncompleteTasks = taskRepository
+        .getTasksForPeriod(previousPeriodId)
+        .where((task) => !task.isRecurring && !task.completed)
+        .toList();
     final currentPeriodTasks = await _cleanAndDedupeTasks([
       ...previousRecurringTasks,
       ...previousIncompleteTasks,
       ...taskRepository.getTasksForPeriod(periodId),
     ]);
-    final newTasks =
-        currentPeriodTasks
-            .where((task) => task.timePeriodId != periodId)
-            .map((task) => portTaskToPeriod(task, periodId))
-            .toList();
+    final newTasks = currentPeriodTasks
+        .where((task) => task.timePeriodId != periodId)
+        .map((task) => portTaskToPeriod(task, periodId))
+        .toList();
 
     await taskRepository.createTasks(newTasks);
     await periodRepository.markAsBackfilled(periodId);
@@ -148,11 +150,10 @@ class _HomeScreenState extends State<HomeScreen> {
             SizedBox(
               height: availableHeight * AppTheme.buttonHeightRatio,
               child: TopBar(
-                onReset:
-                    () => _handlePeriodChange(
-                      getCurrentTimePeriodId(extractCadence(_selectedPeriodId)),
-                      false,
-                    ),
+                onReset: () => _handlePeriodChange(
+                  getCurrentTimePeriodId(extractCadence(_selectedPeriodId)),
+                  false,
+                ),
               ),
             ),
 
@@ -188,10 +189,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     // in the correct time period.
                     await Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder:
-                            (_) => TaskDetailScreen(
-                              initialTimePeriodId: _selectedPeriodId,
-                            ),
+                        builder: (_) => TaskDetailScreen(
+                          initialTimePeriodId: _selectedPeriodId,
+                        ),
                       ),
                     );
                     // After returning, rebuild to pick up newly created tasks.

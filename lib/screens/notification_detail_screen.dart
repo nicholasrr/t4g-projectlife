@@ -18,7 +18,7 @@ class NotificationDetailScreen extends StatefulWidget {
 class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
   final _messageController = TextEditingController();
   final _repo = NotificationRepository();
-  late String _selectedPeriodId;
+  late String _selectedCadence;
   late TimeOfDay _selectedTime;
   final Set<int> _selectedDays = {};
 
@@ -26,7 +26,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
   void initState() {
     super.initState();
     final existing = widget.existingNotification;
-    _selectedPeriodId = existing?.timePeriodId ?? getCurrentTimePeriodId('D');
+    _selectedCadence = existing?.timeCadence ?? 'D';
     final hour = existing?.hour ?? 9;
     final minute = existing?.minute ?? 0;
     _selectedTime = TimeOfDay(hour: hour, minute: minute);
@@ -69,7 +69,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
       minute: _selectedTime.minute,
       daysOfWeek: _selectedDays.toList()..sort(),
       message: message,
-      timePeriodId: _selectedPeriodId,
+      timeCadence: _selectedCadence[0],
       enabled: true,
     );
 
@@ -88,13 +88,6 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final periodOptions = {
-      'D': getCurrentTimePeriodId('D'),
-      'W': getCurrentTimePeriodId('W'),
-      'M': getCurrentTimePeriodId('M'),
-      'Q': getCurrentTimePeriodId('Q'),
-      'Y': getCurrentTimePeriodId('Y'),
-    };
 
     return Scaffold(
       appBar: AppBar(
@@ -171,25 +164,22 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
             ),
             const SizedBox(height: AppTheme.spacing),
             DropdownButtonFormField<String>(
-              value: _selectedPeriodId,
+              value: _selectedCadence,
               decoration: const InputDecoration(
                 labelText: 'Time period to open',
               ),
-              items:
-                  periodOptions.entries
-                      .map(
-                        (entry) => DropdownMenuItem(
-                          value: entry.value,
-                          child: Text(
-                            '${entry.key} — ${getPeriodDisplayString(entry.value)}',
-                          ),
-                        ),
-                      )
-                      .toList(),
+              items: ['D', 'W', 'M', 'Q', 'Y']
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry,
+                      child: Text('$entry — ${getCadenceDisplayString(entry)}'),
+                    ),
+                  )
+                  .toList(),
               onChanged: (value) {
                 if (value != null) {
                   setState(() {
-                    _selectedPeriodId = value;
+                    _selectedCadence = value;
                   });
                 }
               },

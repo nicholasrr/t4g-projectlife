@@ -21,10 +21,13 @@ class NotificationRule extends HiveObject {
   String message;
 
   @HiveField(5)
-  String timePeriodId;
+  String timeCadence;
 
   @HiveField(6)
   bool enabled;
+
+  @HiveField(7)
+  bool scheduledSuccessfully;
 
   NotificationRule({
     required this.id,
@@ -32,8 +35,9 @@ class NotificationRule extends HiveObject {
     required this.minute,
     required this.daysOfWeek,
     required this.message,
-    required this.timePeriodId,
+    required this.timeCadence,
     this.enabled = true,
+    this.scheduledSuccessfully = false,
   });
 
   String get formattedTime {
@@ -46,14 +50,13 @@ class NotificationRule extends HiveObject {
     if (daysOfWeek.isEmpty) return '';
     final labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final selected = daysOfWeek.toList()..sort();
-    final nameList =
-        selected
-            .map((weekday) {
-              if (weekday < 1 || weekday > 7) return '';
-              return labels[weekday - 1];
-            })
-            .where((label) => label.isNotEmpty)
-            .toList();
+    final nameList = selected
+        .map((weekday) {
+          if (weekday < 1 || weekday > 7) return '';
+          return labels[weekday - 1];
+        })
+        .where((label) => label.isNotEmpty)
+        .toList();
     return nameList.join(', ');
   }
 }

@@ -323,3 +323,37 @@ Task portTaskToPeriod(Task task, String newPeriodId) {
     currentCount: newCurrentCount,
   );
 }
+
+String getCadenceTasksDisplayString(String cadence) {
+  switch (cadence) {
+    case 'D':
+      return 'Daily Tasks';
+    case 'W':
+      return 'Weekly Tasks';
+    case 'M':
+      return 'Monthly Tasks';
+    case 'Q':
+      return 'Quarterly Tasks';
+    case 'Y':
+      return 'Yearly Tasks';
+    default:
+      return '';
+  }
+}
+
+String getCadenceDisplayString(String cadence) {
+  switch (cadence) {
+    case 'D':
+      return 'daily';
+    case 'W':
+      return 'weekly';
+    case 'M':
+      return 'monthly';
+    case 'Q':
+      return 'quarterly';
+    case 'Y':
+      return 'yearly';
+    default:
+      return 'daily';
+  }
+}

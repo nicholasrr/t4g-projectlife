@@ -24,35 +24,31 @@ class _TypeSelectorState extends State<TypeSelector> {
           _TypeButton(
             icon: Icons.view_agenda,
             label: 'All',
-            isSelected: Globals.selectedTypeNotifier.value == SelectedType.all,
+            targetType: SelectedType.all,
             onTap: () => setState(() => Globals.setAll()),
           ),
           _TypeButton(
             icon: Icons.sync,
             label: 'Recurring',
-            isSelected:
-                Globals.selectedTypeNotifier.value == SelectedType.recurring,
+            targetType: SelectedType.recurring,
             onTap: () => setState(() => Globals.setRecurring()),
           ),
           _TypeButton(
             icon: Icons.check_box,
             label: 'Ad-hoc',
-            isSelected:
-                Globals.selectedTypeNotifier.value == SelectedType.adhoc,
+            targetType: SelectedType.adhoc,
             onTap: () => setState(() => Globals.setAdHoc()),
           ),
           _TypeButton(
             icon: Icons.bar_chart,
             label: 'Statistics',
-            isSelected:
-                Globals.selectedTypeNotifier.value == SelectedType.statistics,
+            targetType: SelectedType.statistics,
             onTap: () => setState(() => Globals.setStatistics()),
           ),
           _TypeButton(
             icon: Icons.help,
             label: 'How-to',
-            isSelected:
-                Globals.selectedTypeNotifier.value == SelectedType.howto,
+            targetType: SelectedType.howto,
             onTap: () => setState(() => Globals.setHowTo()),
           ),
         ],
@@ -65,13 +61,13 @@ class _TypeSelectorState extends State<TypeSelector> {
 class _TypeButton extends StatelessWidget {
   final IconData icon;
   final String label;
-  final bool isSelected;
+  final SelectedType targetType;
   final VoidCallback? onTap;
 
   const _TypeButton({
     required this.icon,
     required this.label,
-    required this.isSelected,
+    required this.targetType,
     required this.onTap,
   });
 
@@ -81,43 +77,41 @@ class _TypeButton extends StatelessWidget {
 
     return ValueListenableBuilder(
       valueListenable: Globals.selectedTypeNotifier,
-      builder:
-          (_, selectedType, _) => InkWell(
-            onTap: onTap,
+      builder: (_, selectedType, _) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppTheme.radius),
+        child: Container(
+          padding: const EdgeInsets.all(AppTheme.spacing),
+          decoration: BoxDecoration(
+            color: (selectedType == targetType)
+                ? theme.colorScheme.primary
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(AppTheme.radius),
-            child: Container(
-              padding: const EdgeInsets.all(AppTheme.spacing),
-              decoration: BoxDecoration(
-                color:
-                    isSelected ? theme.colorScheme.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(AppTheme.radius),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    icon,
-                    color:
-                        isSelected
-                            ? theme.colorScheme.onPrimary
-                            : theme.colorScheme.primary,
-                  ),
-                  if (selectedType == SelectedType.howto) ...[
-                    const SizedBox(height: AppTheme.spacing / 2),
-                    Text(
-                      label,
-                      style: theme.textTheme.labelSmall!.copyWith(
-                        color:
-                            isSelected
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
           ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: (selectedType == targetType)
+                    ? theme.colorScheme.onPrimary
+                    : theme.colorScheme.primary,
+              ),
+              if (selectedType == SelectedType.howto) ...[
+                const SizedBox(height: AppTheme.spacing / 2),
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall!.copyWith(
+                    color: (selectedType == targetType)
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.primary,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

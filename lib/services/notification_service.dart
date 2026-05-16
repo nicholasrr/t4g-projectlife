@@ -29,10 +29,8 @@ class NotificationService {
       final timezoneInfo = await FlutterTimezone.getLocalTimezone();
       tz.setLocalLocation(tz.getLocation(timezoneInfo.identifier));
     } catch (_) {
-      // If we cannot obtain the IANA zone, fall back to UTC. Notifications
-      // will still be scheduled but may not preserve local wall-clock
-      // semantics across device timezone changes until the app is opened.
-      tz.setLocalLocation(tz.UTC);
+      // If we cannot obtain the IANA zone, do not set it, use the default value.
+      print('Failed to get timezone from flutter_timezone');
     }
 
     final androidSettings = AndroidInitializationSettings(
@@ -43,9 +41,13 @@ class NotificationService {
       requestBadgePermission: false,
       requestSoundPermission: false,
     );
+    final initSettings = InitializationSettings(
+      android: androidSettings,
+      iOS: iOSSettings,
+    );
 
     await _plugin.initialize(
-      InitializationSettings(android: androidSettings, iOS: iOSSettings),
+      settings: initSettings,
       onDidReceiveNotificationResponse: _handleNotificationResponse,
     );
 
@@ -66,8 +68,15 @@ class NotificationService {
   }
 
   Future<bool> _checkPermissionStatus() async {
-    final status = await Permission.notification.status;
-    return status.isGranted || status.isLimited;
+    final notificationStatus = await Permission.notification.status;
+    print('Notification permission status: $notificationStatus');
+    final notificationGranted =
+        notificationStatus.isGranted || notificationStatus.isLimited;
+    final scheduleAlarmStatus = await Permission.scheduleExactAlarm.status;
+    print('Schedule exact alarm permission status: $scheduleAlarmStatus');
+    final scheduleAlarmGranted =
+        scheduleAlarmStatus.isGranted || scheduleAlarmStatus.isLimited;
+    return notificationGranted && scheduleAlarmGranted;
   }
 
   Future<bool> checkPermissionStatus() async {
@@ -75,9 +84,25 @@ class NotificationService {
     return _permissionGranted;
   }
 
+  Future<List<NotificationRule>> getUnscheduledNotificationRules() async {
+    return NotificationRepository()
+        .getAllNotificationRules()
+        .where((rule) => !rule.scheduledSuccessfully && rule.enabled)
+        .toList();
+  }
+
   Future<bool> requestPermission() async {
-    final status = await Permission.notification.request();
-    _permissionGranted = status.isGranted || status.isLimited;
+    final notificationStatus = await Permission.notification.request();
+    print('Notification permission status after request: $notificationStatus');
+    final notificationGranted =
+        notificationStatus.isGranted || notificationStatus.isLimited;
+    final scheduleAlarmStatus = await Permission.scheduleExactAlarm.request();
+    print(
+      'Schedule exact alarm permission status after request: $scheduleAlarmStatus',
+    );
+    final scheduleAlarmGranted =
+        scheduleAlarmStatus.isGranted || scheduleAlarmStatus.isLimited;
+    _permissionGranted = notificationGranted && scheduleAlarmGranted;
     if (_permissionGranted) {
       await scheduleAllStoredNotifications();
     }
@@ -106,12 +131,12 @@ class NotificationService {
   }
 
   int _notificationId(String ruleId, int weekday) {
-    var hash = 0;
-    for (var code in ruleId.codeUnits) {
-      hash = ((hash << 5) - hash) + code;
-      hash &= 0x7fffffff;
+    var id = 0;
+    for (final code in ruleId.codeUnits) {
+      id = ((id * 31) + code) & 0x7fffffff;
     }
-    return hash * 10 + weekday;
+    id = ((id << 3) ^ weekday) & 0x7fffffff;
+    return id == 0 ? weekday : id;
   }
 
   NotificationDetails _notificationDetails() {
@@ -133,51 +158,78 @@ class NotificationService {
     return NotificationDetails(android: androidDetails, iOS: iosDetails);
   }
 
-  Future<void> scheduleNotificationRule(NotificationRule rule) async {
+  Future<bool> scheduleNotificationRule(NotificationRule rule) async {
     if (!_permissionGranted || !rule.enabled) {
-      return;
+      rule.scheduledSuccessfully = false;
+      await NotificationRepository().editNotificationRule(rule);
+      return false;
     }
 
-    await cancelNotificationRule(rule);
+    var success = true;
     final details = _notificationDetails();
 
-    for (final weekday in rule.daysOfWeek) {
-      // Compute next local DateTime for the requested weekday/time.
-      final now = DateTime.now();
-      var scheduledLocal = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        rule.hour,
-        rule.minute,
-      );
-      while (scheduledLocal.weekday != weekday ||
-          !scheduledLocal.isAfter(now)) {
-        // Can't schedule a notification for the past, so
-        // compute next local DateTime for the requested weekday/time.
-        scheduledLocal = scheduledLocal.add(const Duration(days: 1));
+    try {
+      await cancelNotificationRule(rule);
+      for (final weekday in rule.daysOfWeek) {
+        final now = DateTime.now();
+        var scheduledLocal = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          rule.hour,
+          rule.minute,
+        );
+        while (scheduledLocal.weekday != weekday ||
+            !scheduledLocal.isAfter(now)) {
+          scheduledLocal = scheduledLocal.add(const Duration(days: 1));
+        }
+
+        final scheduledTz = tz.TZDateTime.from(scheduledLocal, tz.local);
+        print(
+          'Scheduling notification for rule ${rule.id} on weekday $weekday at local time ${scheduledLocal.toIso8601String()} (tz: ${scheduledTz.toIso8601String()})',
+        );
+
+        await _plugin.zonedSchedule(
+          id: _notificationId(rule.id, weekday),
+          title: 'Project: Life',
+          body: rule.message,
+          scheduledDate: scheduledTz,
+          notificationDetails: details,
+          payload: rule.timeCadence,
+          androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+          matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
+        );
       }
-
-      final scheduledTz = tz.TZDateTime.from(scheduledLocal, tz.local);
-
-      await _plugin.zonedSchedule(
-        _notificationId(rule.id, weekday),
-        'Project: Life',
-        rule.message,
-        scheduledTz,
-        details,
-        payload: rule.timePeriodId,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.wallClockTime,
-        matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
-      );
+    } catch (error, stackTrace) {
+      success = false;
+      // ignore: avoid_print
+      print('Failed to schedule notification rule ${rule.id}: $error');
+      // ignore: avoid_print
+      print(stackTrace);
     }
+
+    rule.scheduledSuccessfully = success;
+    await NotificationRepository().editNotificationRule(rule);
+    return success;
   }
 
-  Future<void> cancelNotificationRule(NotificationRule rule) async {
-    for (final weekday in rule.daysOfWeek) {
-      await _plugin.cancel(_notificationId(rule.id, weekday));
+  Future<bool> cancelNotificationRule(NotificationRule rule) async {
+    try {
+      for (final weekday in rule.daysOfWeek) {
+        await _plugin.cancel(id: _notificationId(rule.id, weekday));
+        print(
+          'Successfully cancelled notification for rule ${rule.id} on weekday $weekday',
+        );
+      }
+      return true;
+    } catch (error, stackTrace) {
+      // If cancel fails due to invalid saved IDs, refuse to delete the rule
+      // until the user can retry or the issue is corrected.
+      // ignore: avoid_print
+      print('Failed to cancel notification rule ${rule.id}: $error');
+      // ignore: avoid_print
+      print(stackTrace);
+      return false;
     }
   }
 
@@ -189,6 +241,59 @@ class NotificationService {
         await scheduleNotificationRule(rule);
       }
     }
+  }
+
+  Future<bool> sendDummyNotification() async {
+    if (!_permissionGranted) {
+      return false;
+    }
+
+    try {
+      final details = _notificationDetails();
+      final id = DateTime.now().millisecondsSinceEpoch & 0x7fffffff;
+      final scheduledDate = tz.TZDateTime.now(
+        tz.local,
+      ).add(const Duration(seconds: 10));
+      await _plugin.zonedSchedule(
+        id: id,
+        title: 'Project: Life',
+        body: 'Dummy notification test',
+        scheduledDate: scheduledDate,
+        notificationDetails: details,
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      );
+      print(
+        'Sent dummy notification with id $id scheduled for ${scheduledDate.toIso8601String()}',
+      );
+      return true;
+    } catch (error, stackTrace) {
+      // ignore: avoid_print
+      print('Failed to send dummy notification: $error');
+      // ignore: avoid_print
+      print(stackTrace);
+      return false;
+    }
+  }
+
+  Future<(int, int)> fixUnscheduledNotifications() async {
+    _permissionGranted = await _checkPermissionStatus();
+    if (!_permissionGranted) {
+      final hasPermission = await requestPermission();
+      if (!hasPermission) {
+        return (0, 0);
+      }
+    }
+
+    final rules = (await getUnscheduledNotificationRules());
+    var fixedCount = 0;
+    var totalUnscheduled = rules.length;
+    for (final rule in rules) {
+      final success = await scheduleNotificationRule(rule);
+      if (success) {
+        fixedCount++;
+      }
+    }
+    return (fixedCount, totalUnscheduled);
   }
 
   Future<void> openSettings() async {

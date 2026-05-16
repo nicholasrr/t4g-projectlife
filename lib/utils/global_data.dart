@@ -19,22 +19,27 @@ class Globals {
 
   static setAll() {
     selectedTypeNotifier.value = SelectedType.all;
+    tasksVersion.value++;
   }
 
   static setRecurring() {
     selectedTypeNotifier.value = SelectedType.recurring;
+    tasksVersion.value++;
   }
 
   static setAdHoc() {
     selectedTypeNotifier.value = SelectedType.adhoc;
+    tasksVersion.value++;
   }
 
   static setStatistics() {
     selectedTypeNotifier.value = SelectedType.statistics;
+    tasksVersion.value++;
   }
 
   static setHowTo() {
     selectedTypeNotifier.value = SelectedType.howto;
+    tasksVersion.value++;
   }
 
   static void setSelectedCategories(Set<String> ids) {

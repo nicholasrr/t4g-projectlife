@@ -7,6 +7,7 @@ import '../screens/manage_categories_screen.dart';
 import '../screens/manage_notifications_screen.dart';
 import '../utils/global_data.dart';
 import '../db/statistics_service.dart';
+import '../utils/utils.dart';
 
 /// The main scrollable list of tasks
 class TaskList extends StatelessWidget {
@@ -117,9 +118,8 @@ class TaskList extends StatelessWidget {
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder:
-                                            (_) =>
-                                                const ManageCategoriesScreen(),
+                                        builder: (_) =>
+                                            const ManageCategoriesScreen(),
                                       ),
                                     );
                                   },
@@ -135,9 +135,8 @@ class TaskList extends StatelessWidget {
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder:
-                                            (_) =>
-                                                const ManageNotificationsScreen(),
+                                        builder: (_) =>
+                                            const ManageNotificationsScreen(),
                                       ),
                                     );
                                   },
@@ -154,45 +153,35 @@ class TaskList extends StatelessWidget {
                                   label: const Text(
                                     'Backfill tasks from previous periods',
                                   ),
-                                  onPressed:
-                                      onresetBackfill != null
-                                          ? () {
-                                            showDialog<void>(
-                                              context: context,
-                                              builder:
-                                                  (context) => AlertDialog(
-                                                    title: const Text(
-                                                      'Start backfill?',
-                                                    ),
-                                                    content: const Text(
-                                                      'This will port incomplete or recurring tasks from previous periods.',
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed:
-                                                            () => Navigator.pop(
-                                                              context,
-                                                            ),
-                                                        child: const Text(
-                                                          'Cancel',
-                                                        ),
-                                                      ),
-                                                      ElevatedButton(
-                                                        onPressed: () {
-                                                          Navigator.pop(
-                                                            context,
-                                                          );
-                                                          onresetBackfill!();
-                                                        },
-                                                        child: const Text(
-                                                          'Reset',
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                            );
-                                          }
-                                          : null,
+                                  onPressed: onresetBackfill != null
+                                      ? () {
+                                          showDialog<void>(
+                                            context: context,
+                                            builder: (context) => AlertDialog(
+                                              title: const Text(
+                                                'Start backfill?',
+                                              ),
+                                              content: const Text(
+                                                'This will port incomplete or recurring tasks from previous periods.',
+                                              ),
+                                              actions: [
+                                                TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                ElevatedButton(
+                                                  onPressed: () {
+                                                    Navigator.pop(context);
+                                                    onresetBackfill!();
+                                                  },
+                                                  child: const Text('Reset'),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }
+                                      : null,
                                 ),
                               ),
                             ],
@@ -205,32 +194,30 @@ class TaskList extends StatelessWidget {
 
                 // Otherwise filter tasks by type (unless 'all' is selected), then by selected categories (if any)
                 final tasks = TaskRepository().getTasksForPeriod(timePeriodId);
-                final baseFiltered =
-                    (selectedType == SelectedType.all)
-                        ? tasks
-                        : tasks
-                            .where(
-                              (t) =>
-                                  t.isRecurring ==
-                                  (selectedType == SelectedType.recurring),
-                            )
-                            .toList();
+                final baseFiltered = (selectedType == SelectedType.all)
+                    ? tasks
+                    : tasks
+                          .where(
+                            (t) =>
+                                t.isRecurring ==
+                                (selectedType == SelectedType.recurring),
+                          )
+                          .toList();
 
-                final filtered =
-                    selectedCategories.isNotEmpty
-                        ? baseFiltered.where((t) {
-                          final hasCategory = t.categoryId != null;
-                          final matchesCategory =
-                              hasCategory &&
-                              selectedCategories.contains(t.categoryId);
-                          final matchesUncategorized =
-                              !hasCategory &&
-                              selectedCategories.contains(
-                                Globals.uncategorizedKey,
-                              );
-                          return matchesCategory || matchesUncategorized;
-                        }).toList()
-                        : baseFiltered;
+                final filtered = selectedCategories.isNotEmpty
+                    ? baseFiltered.where((t) {
+                        final hasCategory = t.categoryId != null;
+                        final matchesCategory =
+                            hasCategory &&
+                            selectedCategories.contains(t.categoryId);
+                        final matchesUncategorized =
+                            !hasCategory &&
+                            selectedCategories.contains(
+                              Globals.uncategorizedKey,
+                            );
+                        return matchesCategory || matchesUncategorized;
+                      }).toList()
+                    : baseFiltered;
 
                 // Apply sorting
                 final sortMode = SettingsRepository().getSortMode();
@@ -254,39 +241,27 @@ class TaskList extends StatelessWidget {
                       break;
                     case 'category_asc':
                       taskList.sort((a, b) {
-                        final catA =
-                            a.categoryId != null
-                                ? categoryRepo
-                                        .getCategory(a.categoryId!)
-                                        ?.title ??
-                                    ''
-                                : '';
-                        final catB =
-                            b.categoryId != null
-                                ? categoryRepo
-                                        .getCategory(b.categoryId!)
-                                        ?.title ??
-                                    ''
-                                : '';
+                        final catA = a.categoryId != null
+                            ? categoryRepo.getCategory(a.categoryId!)?.title ??
+                                  ''
+                            : '';
+                        final catB = b.categoryId != null
+                            ? categoryRepo.getCategory(b.categoryId!)?.title ??
+                                  ''
+                            : '';
                         return catA.toLowerCase().compareTo(catB.toLowerCase());
                       });
                       break;
                     case 'category_desc':
                       taskList.sort((a, b) {
-                        final catA =
-                            a.categoryId != null
-                                ? categoryRepo
-                                        .getCategory(a.categoryId!)
-                                        ?.title ??
-                                    ''
-                                : '';
-                        final catB =
-                            b.categoryId != null
-                                ? categoryRepo
-                                        .getCategory(b.categoryId!)
-                                        ?.title ??
-                                    ''
-                                : '';
+                        final catA = a.categoryId != null
+                            ? categoryRepo.getCategory(a.categoryId!)?.title ??
+                                  ''
+                            : '';
+                        final catB = b.categoryId != null
+                            ? categoryRepo.getCategory(b.categoryId!)?.title ??
+                                  ''
+                            : '';
                         return catB.toLowerCase().compareTo(catA.toLowerCase());
                       });
                       break;
@@ -297,10 +272,12 @@ class TaskList extends StatelessWidget {
                   }
                 }
 
-                final completedTasks =
-                    filtered.where((t) => t.completed).toList();
-                final incompleteTasks =
-                    filtered.where((t) => !t.completed).toList();
+                final completedTasks = filtered
+                    .where((t) => t.completed)
+                    .toList();
+                final incompleteTasks = filtered
+                    .where((t) => !t.completed)
+                    .toList();
 
                 applySorting(completedTasks);
                 applySorting(incompleteTasks);
@@ -338,13 +315,12 @@ class TaskList extends StatelessWidget {
                         padding: const EdgeInsets.all(AppTheme.padding),
                         child: Text(
                           'Completed',
-                          style: Theme.of(
-                            context,
-                          ).textTheme.titleLarge!.copyWith(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge!
+                              .copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
                         ),
                       ),
                     ),
@@ -361,23 +337,6 @@ class TaskList extends StatelessWidget {
         );
       },
     );
-  }
-
-  String getCadenceDisplayString(String cadence) {
-    switch (cadence) {
-      case 'D':
-        return 'Daily Tasks';
-      case 'W':
-        return 'Weekly Tasks';
-      case 'M':
-        return 'Monthly Tasks';
-      case 'Q':
-        return 'Quarterly Tasks';
-      case 'Y':
-        return 'Yearly Tasks';
-      default:
-        return '';
-    }
   }
 
   List<Widget> getSlivers(
@@ -398,7 +357,7 @@ class TaskList extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.padding),
               child: Text(
-                getCadenceDisplayString(cadence),
+                getCadenceTasksDisplayString(cadence),
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
                   color: Theme.of(
                     context,
@@ -420,7 +379,7 @@ class TaskList extends StatelessWidget {
                 vertical: AppTheme.spacing / 2,
               ),
               child: Text(
-                'No ${getCadenceDisplayString(cadence).toLowerCase()}',
+                'No ${getCadenceTasksDisplayString(cadence).toLowerCase()}',
                 style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontStyle: FontStyle.italic,
                   color: Theme.of(
@@ -465,12 +424,12 @@ class _TaskItemState extends State<_TaskItem> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final category =
-        widget.task.categoryId != null
-            ? CategoryRepository().getCategory(widget.task.categoryId!)
-            : null;
-    final categoryColor =
-        category != null ? Color(int.parse(category.colorHex)) : null;
+    final category = widget.task.categoryId != null
+        ? CategoryRepository().getCategory(widget.task.categoryId!)
+        : null;
+    final categoryColor = category != null
+        ? Color(int.parse(category.colorHex))
+        : null;
 
     final settings = SettingsRepository();
     final dragFlip = settings.getDragFlip();
@@ -497,30 +456,28 @@ class _TaskItemState extends State<_TaskItem> {
       confirmDismiss: (direction) async {
         final settings = SettingsRepository();
         final dragFlip = settings.getDragFlip();
-        final isDeleteAction =
-            dragFlip
-                ? direction == DismissDirection.startToEnd
-                : direction == DismissDirection.endToStart;
+        final isDeleteAction = dragFlip
+            ? direction == DismissDirection.startToEnd
+            : direction == DismissDirection.endToStart;
 
         if (isDeleteAction) {
           // Ask user to confirm deletion
           final confirmed = await showDialog<bool>(
             context: context,
-            builder:
-                (context) => AlertDialog(
-                  title: const Text('Delete Task?'),
-                  content: const Text('This action cannot be undone.'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Delete'),
-                    ),
-                  ],
+            builder: (context) => AlertDialog(
+              title: const Text('Delete Task?'),
+              content: const Text('This action cannot be undone.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
                 ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Delete'),
+                ),
+              ],
+            ),
           );
 
           if (confirmed == true) {
@@ -545,11 +502,10 @@ class _TaskItemState extends State<_TaskItem> {
           // Open task in edit mode
           await Navigator.of(context).push(
             MaterialPageRoute(
-              builder:
-                  (_) => TaskDetailScreen(
-                    initialTimePeriodId: widget.task.timePeriodId,
-                    existingTask: widget.task,
-                  ),
+              builder: (_) => TaskDetailScreen(
+                initialTimePeriodId: widget.task.timePeriodId,
+                existingTask: widget.task,
+              ),
             ),
           );
         },
@@ -588,10 +544,9 @@ class _TaskItemState extends State<_TaskItem> {
                       child: Text(
                         widget.task.title,
                         style: theme.textTheme.titleMedium!.copyWith(
-                          decoration:
-                              widget.task.completed
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                          decoration: widget.task.completed
+                              ? TextDecoration.lineThrough
+                              : null,
                         ),
                       ),
                     ),
@@ -653,15 +608,14 @@ class _TaskItemState extends State<_TaskItem> {
                           minHeight: 36,
                         ),
                         padding: EdgeInsets.zero,
-                        onPressed:
-                            widget.task.currentCount > 0
-                                ? () async {
-                                  final updatedTask = widget.task.copyWith(
-                                    currentCount: widget.task.currentCount - 1,
-                                  );
-                                  await _repositories.editTask(updatedTask);
-                                }
-                                : null,
+                        onPressed: widget.task.currentCount > 0
+                            ? () async {
+                                final updatedTask = widget.task.copyWith(
+                                  currentCount: widget.task.currentCount - 1,
+                                );
+                                await _repositories.editTask(updatedTask);
+                              }
+                            : null,
                       ),
                       const SizedBox(width: AppTheme.spacing),
                       IconButton(
@@ -674,17 +628,17 @@ class _TaskItemState extends State<_TaskItem> {
                         padding: EdgeInsets.zero,
                         onPressed:
                             widget.task.currentCount < widget.task.targetCount
-                                ? () async {
-                                  final newCount = widget.task.currentCount + 1;
-                                  final isNowComplete =
-                                      newCount >= widget.task.targetCount;
-                                  final updatedTask = widget.task.copyWith(
-                                    currentCount: newCount,
-                                    completed: isNowComplete,
-                                  );
-                                  await _repositories.editTask(updatedTask);
-                                }
-                                : null,
+                            ? () async {
+                                final newCount = widget.task.currentCount + 1;
+                                final isNowComplete =
+                                    newCount >= widget.task.targetCount;
+                                final updatedTask = widget.task.copyWith(
+                                  currentCount: newCount,
+                                  completed: isNowComplete,
+                                );
+                                await _repositories.editTask(updatedTask);
+                              }
+                            : null,
                       ),
                     ],
                   ),
