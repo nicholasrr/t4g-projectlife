@@ -1,0 +1,55 @@
+name: Build Flutter iOS IPA
+
+on:
+  push:
+    branches: [ main, master ] # Triggers the build whenever you push code here
+  workflow_dispatch: # Allows you to manually click a button in GitHub to start the build
+
+jobs:
+  build-ios:
+    name: Build iOS App
+    runs-on: macos-latest # Tells GitHub to give you a Mac machine in the cloud
+
+    steps:
+      # Step 1: Pull your code into the Mac environment
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Java (Required by Flutter build chains)
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Step 3: Install and cache the Flutter SDK
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true # Caches dependencies to make future builds much faster
+
+      # Step 4: Download dependencies (pub packages)
+      - name: Install Dependencies
+        run: flutter pub get
+
+      # Step 5: Compile the app into an iOS Archive
+      # Note: "--no-codesign" bypasses the immediate need for paid Apple developer certificates 
+      # so you can sign it locally on Windows using tools like Sideloadly.
+      - name: Build iOS IPA
+        run: flutter build ipa --release --no-codesign
+
+      # Step 6: Find and extract the built IPA/Payload directory to share
+      # This compresses the build outputs so it's ready for download
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p build/ios/artifacts
+          cd build/ios/iphoneos
+          zip -r ../artifacts/Runner.ipa Runner.app
+
+      # Step 7: Upload the finished bundle back to your GitHub repository dashboard
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-ipa
+          path: build/ios/artifacts/Runner.ipa
